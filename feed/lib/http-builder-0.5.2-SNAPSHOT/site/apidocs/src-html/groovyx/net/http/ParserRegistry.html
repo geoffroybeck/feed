@@ -1,0 +1,489 @@
+<HTML>
+<BODY BGCOLOR="white">
+<PRE>
+<FONT color="green">001</FONT>    /*<a name="line.1"></a>
+<FONT color="green">002</FONT>     * Copyright 2008-2011 Thomas Nichols.  http://blog.thomnichols.org<a name="line.2"></a>
+<FONT color="green">003</FONT>     *<a name="line.3"></a>
+<FONT color="green">004</FONT>     * Licensed under the Apache License, Version 2.0 (the "License");<a name="line.4"></a>
+<FONT color="green">005</FONT>     * you may not use this file except in compliance with the License.<a name="line.5"></a>
+<FONT color="green">006</FONT>     * You may obtain a copy of the License at<a name="line.6"></a>
+<FONT color="green">007</FONT>     *<a name="line.7"></a>
+<FONT color="green">008</FONT>     *     http://www.apache.org/licenses/LICENSE-2.0<a name="line.8"></a>
+<FONT color="green">009</FONT>     *<a name="line.9"></a>
+<FONT color="green">010</FONT>     * Unless required by applicable law or agreed to in writing, software<a name="line.10"></a>
+<FONT color="green">011</FONT>     * distributed under the License is distributed on an "AS IS" BASIS,<a name="line.11"></a>
+<FONT color="green">012</FONT>     * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.<a name="line.12"></a>
+<FONT color="green">013</FONT>     * See the License for the specific language governing permissions and<a name="line.13"></a>
+<FONT color="green">014</FONT>     * limitations under the License.<a name="line.14"></a>
+<FONT color="green">015</FONT>     *<a name="line.15"></a>
+<FONT color="green">016</FONT>     * You are receiving this code free of charge, which represents many hours of<a name="line.16"></a>
+<FONT color="green">017</FONT>     * effort from other individuals and corporations.  As a responsible member <a name="line.17"></a>
+<FONT color="green">018</FONT>     * of the community, you are encouraged (but not required) to donate any <a name="line.18"></a>
+<FONT color="green">019</FONT>     * enhancements or improvements back to the community under a similar open <a name="line.19"></a>
+<FONT color="green">020</FONT>     * source license.  Thank you. -TMN<a name="line.20"></a>
+<FONT color="green">021</FONT>     */<a name="line.21"></a>
+<FONT color="green">022</FONT>    package groovyx.net.http;<a name="line.22"></a>
+<FONT color="green">023</FONT>    <a name="line.23"></a>
+<FONT color="green">024</FONT>    import groovy.lang.Closure;<a name="line.24"></a>
+<FONT color="green">025</FONT>    import groovy.util.XmlSlurper;<a name="line.25"></a>
+<FONT color="green">026</FONT>    import groovy.util.slurpersupport.GPathResult;<a name="line.26"></a>
+<FONT color="green">027</FONT>    import groovyx.net.http.HTTPBuilder.RequestConfigDelegate;<a name="line.27"></a>
+<FONT color="green">028</FONT>    <a name="line.28"></a>
+<FONT color="green">029</FONT>    import java.io.IOException;<a name="line.29"></a>
+<FONT color="green">030</FONT>    import java.io.InputStream;<a name="line.30"></a>
+<FONT color="green">031</FONT>    import java.io.InputStreamReader;<a name="line.31"></a>
+<FONT color="green">032</FONT>    import java.io.Reader;<a name="line.32"></a>
+<FONT color="green">033</FONT>    import java.io.UnsupportedEncodingException;<a name="line.33"></a>
+<FONT color="green">034</FONT>    import java.net.URL;<a name="line.34"></a>
+<FONT color="green">035</FONT>    import java.nio.charset.Charset;<a name="line.35"></a>
+<FONT color="green">036</FONT>    import java.util.HashMap;<a name="line.36"></a>
+<FONT color="green">037</FONT>    import java.util.Iterator;<a name="line.37"></a>
+<FONT color="green">038</FONT>    import java.util.List;<a name="line.38"></a>
+<FONT color="green">039</FONT>    import java.util.Map;<a name="line.39"></a>
+<FONT color="green">040</FONT>    <a name="line.40"></a>
+<FONT color="green">041</FONT>    import javax.xml.parsers.ParserConfigurationException;<a name="line.41"></a>
+<FONT color="green">042</FONT>    <a name="line.42"></a>
+<FONT color="green">043</FONT>    import net.sf.json.JSON;<a name="line.43"></a>
+<FONT color="green">044</FONT>    import net.sf.json.groovy.JsonSlurper;<a name="line.44"></a>
+<FONT color="green">045</FONT>    <a name="line.45"></a>
+<FONT color="green">046</FONT>    import org.apache.commons.logging.Log;<a name="line.46"></a>
+<FONT color="green">047</FONT>    import org.apache.commons.logging.LogFactory;<a name="line.47"></a>
+<FONT color="green">048</FONT>    import org.apache.http.HttpEntity;<a name="line.48"></a>
+<FONT color="green">049</FONT>    import org.apache.http.HttpResponse;<a name="line.49"></a>
+<FONT color="green">050</FONT>    import org.apache.http.NameValuePair;<a name="line.50"></a>
+<FONT color="green">051</FONT>    import org.apache.http.client.utils.URLEncodedUtils;<a name="line.51"></a>
+<FONT color="green">052</FONT>    import org.apache.http.entity.HttpEntityWrapper;<a name="line.52"></a>
+<FONT color="green">053</FONT>    import org.apache.http.message.BasicHeader;<a name="line.53"></a>
+<FONT color="green">054</FONT>    import org.apache.xml.resolver.Catalog;<a name="line.54"></a>
+<FONT color="green">055</FONT>    import org.apache.xml.resolver.CatalogManager;<a name="line.55"></a>
+<FONT color="green">056</FONT>    import org.apache.xml.resolver.tools.CatalogResolver;<a name="line.56"></a>
+<FONT color="green">057</FONT>    import org.codehaus.groovy.runtime.MethodClosure;<a name="line.57"></a>
+<FONT color="green">058</FONT>    import org.xml.sax.SAXException;<a name="line.58"></a>
+<FONT color="green">059</FONT>    import org.xml.sax.XMLReader;<a name="line.59"></a>
+<FONT color="green">060</FONT>    <a name="line.60"></a>
+<FONT color="green">061</FONT>    <a name="line.61"></a>
+<FONT color="green">062</FONT>    /**<a name="line.62"></a>
+<FONT color="green">063</FONT>     * &lt;p&gt;Keeps track of response parsers for each content type.  Each parser <a name="line.63"></a>
+<FONT color="green">064</FONT>     * should should be a closure that accepts an {@link HttpResponse} instance,<a name="line.64"></a>
+<FONT color="green">065</FONT>     * and returns whatever handler is appropriate for reading the response <a name="line.65"></a>
+<FONT color="green">066</FONT>     * data for that content-type.  For example, a plain-text response should <a name="line.66"></a>
+<FONT color="green">067</FONT>     * probably be parsed with a &lt;code&gt;Reader&lt;/code&gt;, while an XML response <a name="line.67"></a>
+<FONT color="green">068</FONT>     * might be parsed by an XmlSlurper, which would then be passed to the <a name="line.68"></a>
+<FONT color="green">069</FONT>     * response closure. &lt;/p&gt;<a name="line.69"></a>
+<FONT color="green">070</FONT>     * <a name="line.70"></a>
+<FONT color="green">071</FONT>     * &lt;p&gt;Note that all methods in this class assume {@link HttpResponse#getEntity()}<a name="line.71"></a>
+<FONT color="green">072</FONT>     * return a non-null value.  It is the job of the HTTPBuilder instance to ensure<a name="line.72"></a>
+<FONT color="green">073</FONT>     * a NullPointerException is not thrown by passing a response that contains no<a name="line.73"></a>
+<FONT color="green">074</FONT>     * entity.&lt;/p&gt;<a name="line.74"></a>
+<FONT color="green">075</FONT>     * <a name="line.75"></a>
+<FONT color="green">076</FONT>     * &lt;p&gt;You can see the list of content-type parsers that are built-in to the <a name="line.76"></a>
+<FONT color="green">077</FONT>     * ParserRegistry class in {@link #buildDefaultParserMap()}.&lt;/p&gt;<a name="line.77"></a>
+<FONT color="green">078</FONT>     * <a name="line.78"></a>
+<FONT color="green">079</FONT>     * @see ContentType<a name="line.79"></a>
+<FONT color="green">080</FONT>     * @author &lt;a href='mailto:tomstrummer+httpbuilder@gmail.com'&gt;Tom Nichols&lt;/a&gt;<a name="line.80"></a>
+<FONT color="green">081</FONT>     */<a name="line.81"></a>
+<FONT color="green">082</FONT>    public class ParserRegistry {<a name="line.82"></a>
+<FONT color="green">083</FONT>            <a name="line.83"></a>
+<FONT color="green">084</FONT>            /**<a name="line.84"></a>
+<FONT color="green">085</FONT>             * The default parser used for unregistered content-types.  This is a copy <a name="line.85"></a>
+<FONT color="green">086</FONT>             * of {@link #parseStream(HttpResponse)}, which is like a no-op that just <a name="line.86"></a>
+<FONT color="green">087</FONT>             * returns the unaltered response stream.<a name="line.87"></a>
+<FONT color="green">088</FONT>             */<a name="line.88"></a>
+<FONT color="green">089</FONT>            protected final Closure DEFAULT_PARSER = new MethodClosure( this, "parseStream" );<a name="line.89"></a>
+<FONT color="green">090</FONT>            /**<a name="line.90"></a>
+<FONT color="green">091</FONT>             * The default charset to use when no charset is given in the Content-Type<a name="line.91"></a>
+<FONT color="green">092</FONT>             * header of a response.  This can be modifid via {@link #setDefaultCharset(String)}. <a name="line.92"></a>
+<FONT color="green">093</FONT>             */<a name="line.93"></a>
+<FONT color="green">094</FONT>            public static final String DEFAULT_CHARSET = "UTF-8";<a name="line.94"></a>
+<FONT color="green">095</FONT>            <a name="line.95"></a>
+<FONT color="green">096</FONT>            private Closure defaultParser = DEFAULT_PARSER;<a name="line.96"></a>
+<FONT color="green">097</FONT>            private Map&lt;String,Closure&gt; registeredParsers = buildDefaultParserMap();<a name="line.97"></a>
+<FONT color="green">098</FONT>            private static String defaultCharset = DEFAULT_CHARSET;<a name="line.98"></a>
+<FONT color="green">099</FONT>            <a name="line.99"></a>
+<FONT color="green">100</FONT>            protected static final Log log = LogFactory.getLog( ParserRegistry.class );<a name="line.100"></a>
+<FONT color="green">101</FONT>            <a name="line.101"></a>
+<FONT color="green">102</FONT>            /**<a name="line.102"></a>
+<FONT color="green">103</FONT>             * This CatalogResolver is static to avoid the overhead of re-parsing<a name="line.103"></a>
+<FONT color="green">104</FONT>             * the catalog definition file every time.  Unfortunately, there's no <a name="line.104"></a>
+<FONT color="green">105</FONT>             * way to share a single Catalog instance between resolvers.  The <a name="line.105"></a>
+<FONT color="green">106</FONT>             * {@link Catalog} class is technically not thread-safe, but as long as you <a name="line.106"></a>
+<FONT color="green">107</FONT>             * do not parse catalog files while using the resolver, it should be fine. <a name="line.107"></a>
+<FONT color="green">108</FONT>             */<a name="line.108"></a>
+<FONT color="green">109</FONT>            protected static CatalogResolver catalogResolver;<a name="line.109"></a>
+<FONT color="green">110</FONT>            <a name="line.110"></a>
+<FONT color="green">111</FONT>            static {<a name="line.111"></a>
+<FONT color="green">112</FONT>                    CatalogManager catalogManager = new CatalogManager();<a name="line.112"></a>
+<FONT color="green">113</FONT>                    catalogManager.setIgnoreMissingProperties( true );<a name="line.113"></a>
+<FONT color="green">114</FONT>                    catalogManager.setUseStaticCatalog( false );<a name="line.114"></a>
+<FONT color="green">115</FONT>                    catalogManager.setRelativeCatalogs( true );<a name="line.115"></a>
+<FONT color="green">116</FONT>                    try {<a name="line.116"></a>
+<FONT color="green">117</FONT>                            catalogResolver = new CatalogResolver( catalogManager );<a name="line.117"></a>
+<FONT color="green">118</FONT>                            catalogResolver.getCatalog().parseCatalog( <a name="line.118"></a>
+<FONT color="green">119</FONT>                                            ParserRegistry.class.getResource( "/catalog/html.xml" ) );<a name="line.119"></a>
+<FONT color="green">120</FONT>                    } catch ( IOException ex ) {<a name="line.120"></a>
+<FONT color="green">121</FONT>                            LogFactory.getLog( ParserRegistry.class )<a name="line.121"></a>
+<FONT color="green">122</FONT>                                    .warn( "Could not resolve default XML catalog", ex );<a name="line.122"></a>
+<FONT color="green">123</FONT>                    }<a name="line.123"></a>
+<FONT color="green">124</FONT>            }<a name="line.124"></a>
+<FONT color="green">125</FONT>            <a name="line.125"></a>
+<FONT color="green">126</FONT>            /**<a name="line.126"></a>
+<FONT color="green">127</FONT>             * Set the charset to use for parsing character streams when no charset <a name="line.127"></a>
+<FONT color="green">128</FONT>             * is given in the Content-Type header.<a name="line.128"></a>
+<FONT color="green">129</FONT>             * @param charset the charset to use, or &lt;code&gt;null&lt;/code&gt; to use <a name="line.129"></a>
+<FONT color="green">130</FONT>             *     {@link #DEFAULT_CHARSET}<a name="line.130"></a>
+<FONT color="green">131</FONT>             */<a name="line.131"></a>
+<FONT color="green">132</FONT>            public static void setDefaultCharset( String charset ) {<a name="line.132"></a>
+<FONT color="green">133</FONT>                    defaultCharset = charset == null ? DEFAULT_CHARSET : charset;<a name="line.133"></a>
+<FONT color="green">134</FONT>            }<a name="line.134"></a>
+<FONT color="green">135</FONT>            <a name="line.135"></a>
+<FONT color="green">136</FONT>            /**<a name="line.136"></a>
+<FONT color="green">137</FONT>             * Helper method to get the charset from the response.  This should be done <a name="line.137"></a>
+<FONT color="green">138</FONT>             * when manually parsing any text response to ensure it is decoded using the<a name="line.138"></a>
+<FONT color="green">139</FONT>             * correct charset. For instance:&lt;pre&gt;<a name="line.139"></a>
+<FONT color="green">140</FONT>             * Reader reader = new InputStreamReader( resp.getEntity().getContent(), <a name="line.140"></a>
+<FONT color="green">141</FONT>             *   ParserRegistry.getCharset( resp ) );&lt;/pre&gt;<a name="line.141"></a>
+<FONT color="green">142</FONT>             * @param resp<a name="line.142"></a>
+<FONT color="green">143</FONT>             */<a name="line.143"></a>
+<FONT color="green">144</FONT>            public static String getCharset( HttpResponse resp ) {<a name="line.144"></a>
+<FONT color="green">145</FONT>                    try {<a name="line.145"></a>
+<FONT color="green">146</FONT>                            NameValuePair charset = resp.getEntity().getContentType()<a name="line.146"></a>
+<FONT color="green">147</FONT>                                    .getElements()[0].getParameterByName("charset");<a name="line.147"></a>
+<FONT color="green">148</FONT>                            <a name="line.148"></a>
+<FONT color="green">149</FONT>                            if ( charset == null || charset.getValue().trim().equals("") ) {<a name="line.149"></a>
+<FONT color="green">150</FONT>                                    log.debug( "Could not find charset in response; using " + defaultCharset );<a name="line.150"></a>
+<FONT color="green">151</FONT>                                    return defaultCharset;<a name="line.151"></a>
+<FONT color="green">152</FONT>                            }<a name="line.152"></a>
+<FONT color="green">153</FONT>                                    <a name="line.153"></a>
+<FONT color="green">154</FONT>                            return charset.getValue();<a name="line.154"></a>
+<FONT color="green">155</FONT>                    }<a name="line.155"></a>
+<FONT color="green">156</FONT>                    catch ( RuntimeException ex ) { // NPE or OOB Exceptions<a name="line.156"></a>
+<FONT color="green">157</FONT>                            log.warn( "Could not parse charset from content-type header in response" );<a name="line.157"></a>
+<FONT color="green">158</FONT>                            return Charset.defaultCharset().name();<a name="line.158"></a>
+<FONT color="green">159</FONT>                    }<a name="line.159"></a>
+<FONT color="green">160</FONT>            }<a name="line.160"></a>
+<FONT color="green">161</FONT>            <a name="line.161"></a>
+<FONT color="green">162</FONT>            /**<a name="line.162"></a>
+<FONT color="green">163</FONT>             * Helper method to get the content-type string from the response <a name="line.163"></a>
+<FONT color="green">164</FONT>             * (no charset).<a name="line.164"></a>
+<FONT color="green">165</FONT>             * @param resp<a name="line.165"></a>
+<FONT color="green">166</FONT>             */<a name="line.166"></a>
+<FONT color="green">167</FONT>            public static String getContentType( HttpResponse resp ) {<a name="line.167"></a>
+<FONT color="green">168</FONT>                    if ( resp.getEntity() == null )<a name="line.168"></a>
+<FONT color="green">169</FONT>                            throw new IllegalArgumentException( "Response does not contain data" );<a name="line.169"></a>
+<FONT color="green">170</FONT>                    if ( resp.getEntity().getContentType() == null )<a name="line.170"></a>
+<FONT color="green">171</FONT>                            throw new IllegalArgumentException( "Response does not have a content-type header" );<a name="line.171"></a>
+<FONT color="green">172</FONT>                    try {<a name="line.172"></a>
+<FONT color="green">173</FONT>                            return resp.getEntity().getContentType().getElements()[0].getName();<a name="line.173"></a>
+<FONT color="green">174</FONT>                    }<a name="line.174"></a>
+<FONT color="green">175</FONT>                    catch ( RuntimeException ex ) {  // NPE or OOB Exceptions<a name="line.175"></a>
+<FONT color="green">176</FONT>                            throw new IllegalArgumentException( "Could not parse content-type from response" );<a name="line.176"></a>
+<FONT color="green">177</FONT>                    }<a name="line.177"></a>
+<FONT color="green">178</FONT>            }<a name="line.178"></a>
+<FONT color="green">179</FONT>            <a name="line.179"></a>
+<FONT color="green">180</FONT>            /**<a name="line.180"></a>
+<FONT color="green">181</FONT>             * Default parser used for binary data.  This simply returns the underlying<a name="line.181"></a>
+<FONT color="green">182</FONT>             * response InputStream.<a name="line.182"></a>
+<FONT color="green">183</FONT>             * @see ContentType#BINARY<a name="line.183"></a>
+<FONT color="green">184</FONT>             * @see HttpEntity#getContent()<a name="line.184"></a>
+<FONT color="green">185</FONT>             * @param resp<a name="line.185"></a>
+<FONT color="green">186</FONT>             * @return an InputStream the binary response stream<a name="line.186"></a>
+<FONT color="green">187</FONT>             * @throws IllegalStateException<a name="line.187"></a>
+<FONT color="green">188</FONT>             * @throws IOException<a name="line.188"></a>
+<FONT color="green">189</FONT>             */<a name="line.189"></a>
+<FONT color="green">190</FONT>            public InputStream parseStream( HttpResponse resp ) throws IOException {<a name="line.190"></a>
+<FONT color="green">191</FONT>                    return resp.getEntity().getContent();<a name="line.191"></a>
+<FONT color="green">192</FONT>            }<a name="line.192"></a>
+<FONT color="green">193</FONT>            <a name="line.193"></a>
+<FONT color="green">194</FONT>            /**<a name="line.194"></a>
+<FONT color="green">195</FONT>             * Default parser used to handle plain text data.  The response text <a name="line.195"></a>
+<FONT color="green">196</FONT>             * is decoded using the charset passed in the response content-type <a name="line.196"></a>
+<FONT color="green">197</FONT>             * header. <a name="line.197"></a>
+<FONT color="green">198</FONT>             * @see ContentType#TEXT<a name="line.198"></a>
+<FONT color="green">199</FONT>             * @param resp<a name="line.199"></a>
+<FONT color="green">200</FONT>             * @return<a name="line.200"></a>
+<FONT color="green">201</FONT>             * @throws UnsupportedEncodingException<a name="line.201"></a>
+<FONT color="green">202</FONT>             * @throws IllegalStateException<a name="line.202"></a>
+<FONT color="green">203</FONT>             * @throws IOException<a name="line.203"></a>
+<FONT color="green">204</FONT>             */<a name="line.204"></a>
+<FONT color="green">205</FONT>            public Reader parseText( HttpResponse resp ) throws IOException {<a name="line.205"></a>
+<FONT color="green">206</FONT>                    return new InputStreamReader( resp.getEntity().getContent(), <a name="line.206"></a>
+<FONT color="green">207</FONT>                                    ParserRegistry.getCharset( resp ) );<a name="line.207"></a>
+<FONT color="green">208</FONT>            }<a name="line.208"></a>
+<FONT color="green">209</FONT>            <a name="line.209"></a>
+<FONT color="green">210</FONT>            /**<a name="line.210"></a>
+<FONT color="green">211</FONT>             * Default parser used to decode a URL-encoded response.<a name="line.211"></a>
+<FONT color="green">212</FONT>             * @see ContentType#URLENC<a name="line.212"></a>
+<FONT color="green">213</FONT>             * @param resp<a name="line.213"></a>
+<FONT color="green">214</FONT>             * @return<a name="line.214"></a>
+<FONT color="green">215</FONT>             * @throws IOException<a name="line.215"></a>
+<FONT color="green">216</FONT>             */<a name="line.216"></a>
+<FONT color="green">217</FONT>            public Map&lt;String,String&gt; parseForm( final HttpResponse resp ) throws IOException {<a name="line.217"></a>
+<FONT color="green">218</FONT>                    HttpEntity entity = resp.getEntity();<a name="line.218"></a>
+<FONT color="green">219</FONT>                    /* URLEncodedUtils won't parse the content unless the content-type is <a name="line.219"></a>
+<FONT color="green">220</FONT>                       application/x-www-form-urlencoded.  Since we want to be able to force <a name="line.220"></a>
+<FONT color="green">221</FONT>                       parsing regardless of what the content-type header says, we need to <a name="line.221"></a>
+<FONT color="green">222</FONT>                       'spoof' the content-type if it's not already acceptable. */<a name="line.222"></a>
+<FONT color="green">223</FONT>                    if ( ! ContentType.URLENC.toString().equals( ParserRegistry.getContentType( resp ) ) ) {<a name="line.223"></a>
+<FONT color="green">224</FONT>                            entity = new HttpEntityWrapper( entity ) {<a name="line.224"></a>
+<FONT color="green">225</FONT>                                    @Override public org.apache.http.Header getContentType() {<a name="line.225"></a>
+<FONT color="green">226</FONT>                                            String value = ContentType.URLENC.toString();<a name="line.226"></a>
+<FONT color="green">227</FONT>                                            String charset = ParserRegistry.getCharset( resp );<a name="line.227"></a>
+<FONT color="green">228</FONT>                                            if ( charset != null ) value += "; charset=" + charset; <a name="line.228"></a>
+<FONT color="green">229</FONT>                                            return new BasicHeader( "Content-Type", value );<a name="line.229"></a>
+<FONT color="green">230</FONT>                                    };<a name="line.230"></a>
+<FONT color="green">231</FONT>                            };<a name="line.231"></a>
+<FONT color="green">232</FONT>                    }<a name="line.232"></a>
+<FONT color="green">233</FONT>                    List&lt;NameValuePair&gt; params = URLEncodedUtils.parse( entity );<a name="line.233"></a>
+<FONT color="green">234</FONT>                    Map&lt;String,String&gt; paramMap = new HashMap&lt;String,String&gt;(params.size());<a name="line.234"></a>
+<FONT color="green">235</FONT>                    for ( NameValuePair param : params ) <a name="line.235"></a>
+<FONT color="green">236</FONT>                            paramMap.put( param.getName(), param.getValue() );<a name="line.236"></a>
+<FONT color="green">237</FONT>                    return paramMap;<a name="line.237"></a>
+<FONT color="green">238</FONT>            }<a name="line.238"></a>
+<FONT color="green">239</FONT>            <a name="line.239"></a>
+<FONT color="green">240</FONT>            /**<a name="line.240"></a>
+<FONT color="green">241</FONT>             * Parse an HTML document by passing it through the NekoHTML parser.<a name="line.241"></a>
+<FONT color="green">242</FONT>             * @see ContentType#HTML<a name="line.242"></a>
+<FONT color="green">243</FONT>             * @see org.cyberneko.html.parsers.SAXParser<a name="line.243"></a>
+<FONT color="green">244</FONT>             * @see XmlSlurper#parse(Reader)<a name="line.244"></a>
+<FONT color="green">245</FONT>             * @param resp HTTP response from which to parse content<a name="line.245"></a>
+<FONT color="green">246</FONT>             * @return the {@link GPathResult} from calling {@link XmlSlurper#parse(Reader)}<a name="line.246"></a>
+<FONT color="green">247</FONT>             * @throws IOException<a name="line.247"></a>
+<FONT color="green">248</FONT>             * @throws SAXException<a name="line.248"></a>
+<FONT color="green">249</FONT>             */<a name="line.249"></a>
+<FONT color="green">250</FONT>            public GPathResult parseHTML( HttpResponse resp ) throws IOException, SAXException {<a name="line.250"></a>
+<FONT color="green">251</FONT>                    XMLReader p = new org.cyberneko.html.parsers.SAXParser();<a name="line.251"></a>
+<FONT color="green">252</FONT>                    p.setEntityResolver( catalogResolver );<a name="line.252"></a>
+<FONT color="green">253</FONT>                    return new XmlSlurper( p ).parse( parseText( resp ) );<a name="line.253"></a>
+<FONT color="green">254</FONT>            }<a name="line.254"></a>
+<FONT color="green">255</FONT>            <a name="line.255"></a>
+<FONT color="green">256</FONT>            /**<a name="line.256"></a>
+<FONT color="green">257</FONT>             * Default parser used to decode an XML response.  <a name="line.257"></a>
+<FONT color="green">258</FONT>             * @see ContentType#XML<a name="line.258"></a>
+<FONT color="green">259</FONT>             * @see XmlSlurper#parse(Reader)<a name="line.259"></a>
+<FONT color="green">260</FONT>             * @param resp HTTP response from which to parse content<a name="line.260"></a>
+<FONT color="green">261</FONT>             * @return the {@link GPathResult} from calling {@link XmlSlurper#parse(Reader)}<a name="line.261"></a>
+<FONT color="green">262</FONT>             * @throws IOException<a name="line.262"></a>
+<FONT color="green">263</FONT>             * @throws SAXException<a name="line.263"></a>
+<FONT color="green">264</FONT>             * @throws ParserConfigurationException<a name="line.264"></a>
+<FONT color="green">265</FONT>             */<a name="line.265"></a>
+<FONT color="green">266</FONT>            public GPathResult parseXML( HttpResponse resp ) throws IOException, SAXException, ParserConfigurationException {<a name="line.266"></a>
+<FONT color="green">267</FONT>                    XmlSlurper xml = new XmlSlurper();<a name="line.267"></a>
+<FONT color="green">268</FONT>                    xml.setEntityResolver( catalogResolver );<a name="line.268"></a>
+<FONT color="green">269</FONT>                    return xml.parse( parseText( resp ) );<a name="line.269"></a>
+<FONT color="green">270</FONT>            }<a name="line.270"></a>
+<FONT color="green">271</FONT>            <a name="line.271"></a>
+<FONT color="green">272</FONT>            /**<a name="line.272"></a>
+<FONT color="green">273</FONT>             * Default parser used to decode a JSON response.<a name="line.273"></a>
+<FONT color="green">274</FONT>             * @see ContentType#JSON<a name="line.274"></a>
+<FONT color="green">275</FONT>             * @param resp<a name="line.275"></a>
+<FONT color="green">276</FONT>             * @return<a name="line.276"></a>
+<FONT color="green">277</FONT>             * @throws IOException<a name="line.277"></a>
+<FONT color="green">278</FONT>             */<a name="line.278"></a>
+<FONT color="green">279</FONT>            public JSON parseJSON( HttpResponse resp ) throws IOException {<a name="line.279"></a>
+<FONT color="green">280</FONT>                    // there is a bug in the JsonSlurper.parse method...<a name="line.280"></a>
+<FONT color="green">281</FONT>                    //String jsonTxt = DefaultGroovyMethods.getText( parseText( resp ) );                   <a name="line.281"></a>
+<FONT color="green">282</FONT>                    return new JsonSlurper().parse( parseText( resp ) );<a name="line.282"></a>
+<FONT color="green">283</FONT>            }<a name="line.283"></a>
+<FONT color="green">284</FONT>            <a name="line.284"></a>
+<FONT color="green">285</FONT>            /**<a name="line.285"></a>
+<FONT color="green">286</FONT>             * &lt;p&gt;Returns a map of default parsers.  Override this method to change <a name="line.286"></a>
+<FONT color="green">287</FONT>             * what parsers are registered by default.  A 'parser' is really just a <a name="line.287"></a>
+<FONT color="green">288</FONT>             * closure that acceipts an {@link HttpResponse} instance and returns <a name="line.288"></a>
+<FONT color="green">289</FONT>             * some parsed data.  You can of course call<a name="line.289"></a>
+<FONT color="green">290</FONT>             * &lt;code&gt;super.buildDefaultParserMap()&lt;/code&gt; and then add or remove <a name="line.290"></a>
+<FONT color="green">291</FONT>             * from that result as well.&lt;/p&gt;<a name="line.291"></a>
+<FONT color="green">292</FONT>             * <a name="line.292"></a>
+<FONT color="green">293</FONT>             * &lt;p&gt;Default registered parsers are:<a name="line.293"></a>
+<FONT color="green">294</FONT>             * &lt;ul&gt;<a name="line.294"></a>
+<FONT color="green">295</FONT>             * &lt;li&gt;{@link ContentType#BINARY} :  {@link #parseStream(HttpResponse) parseStream()}&lt;/li&gt;<a name="line.295"></a>
+<FONT color="green">296</FONT>             * &lt;li&gt;{@link ContentType#TEXT} :  {@link #parseText(HttpResponse) parseText()}&lt;/li&gt;<a name="line.296"></a>
+<FONT color="green">297</FONT>             * &lt;li&gt;{@link ContentType#URLENC} :  {@link #parseForm(HttpResponse) parseForm()}&lt;/li&gt;<a name="line.297"></a>
+<FONT color="green">298</FONT>             * &lt;li&gt;{@link ContentType#XML} :  {@link #parseXML(HttpResponse) parseXML()}&lt;/li&gt;<a name="line.298"></a>
+<FONT color="green">299</FONT>             * &lt;li&gt;{@link ContentType#JSON} :  {@link #parseJSON(HttpResponse) parseJSON()}&lt;/li&gt;<a name="line.299"></a>
+<FONT color="green">300</FONT>             * &lt;/ul&gt;<a name="line.300"></a>
+<FONT color="green">301</FONT>             */<a name="line.301"></a>
+<FONT color="green">302</FONT>            protected Map&lt;String,Closure&gt; buildDefaultParserMap() {<a name="line.302"></a>
+<FONT color="green">303</FONT>                    Map&lt;String,Closure&gt; parsers = new HashMap&lt;String,Closure&gt;();<a name="line.303"></a>
+<FONT color="green">304</FONT>                    <a name="line.304"></a>
+<FONT color="green">305</FONT>                    parsers.put( ContentType.BINARY.toString(), new MethodClosure( this, "parseStream" ) );<a name="line.305"></a>
+<FONT color="green">306</FONT>                    parsers.put( ContentType.TEXT.toString(), new MethodClosure(this,"parseText") );<a name="line.306"></a>
+<FONT color="green">307</FONT>                    parsers.put( ContentType.URLENC.toString(), new MethodClosure(this,"parseForm") );<a name="line.307"></a>
+<FONT color="green">308</FONT>                    parsers.put( ContentType.HTML.toString(), new MethodClosure(this,"parseHTML") );<a name="line.308"></a>
+<FONT color="green">309</FONT>                    <a name="line.309"></a>
+<FONT color="green">310</FONT>                    Closure pClosure = new MethodClosure(this,"parseXML");<a name="line.310"></a>
+<FONT color="green">311</FONT>                    for ( String ct : ContentType.XML.getContentTypeStrings() )<a name="line.311"></a>
+<FONT color="green">312</FONT>                            parsers.put( ct, pClosure );<a name="line.312"></a>
+<FONT color="green">313</FONT>                    <a name="line.313"></a>
+<FONT color="green">314</FONT>                    pClosure = new MethodClosure(this,"parseJSON");<a name="line.314"></a>
+<FONT color="green">315</FONT>                    for ( String ct : ContentType.JSON.getContentTypeStrings() )<a name="line.315"></a>
+<FONT color="green">316</FONT>                            parsers.put( ct, pClosure );<a name="line.316"></a>
+<FONT color="green">317</FONT>                    <a name="line.317"></a>
+<FONT color="green">318</FONT>                    return parsers;<a name="line.318"></a>
+<FONT color="green">319</FONT>            }<a name="line.319"></a>
+<FONT color="green">320</FONT>            <a name="line.320"></a>
+<FONT color="green">321</FONT>            /**<a name="line.321"></a>
+<FONT color="green">322</FONT>             * Add a new XML catalog definiton to the static XML resolver catalog.  <a name="line.322"></a>
+<FONT color="green">323</FONT>             * See the &lt;a href='http://fisheye.codehaus.org/browse/gmod/httpbuilder/trunk/src/main/resources/catalog/html.xml?r=root:'&gt;<a name="line.323"></a>
+<FONT color="green">324</FONT>             * HTTPBuilder source catalog&lt;/a&gt; for an example.<a name="line.324"></a>
+<FONT color="green">325</FONT>             * <a name="line.325"></a>
+<FONT color="green">326</FONT>             * @param catalogLocation URL of a catalog definition file<a name="line.326"></a>
+<FONT color="green">327</FONT>             * @throws IOException if the given URL cannot be parsed or accessed for whatever reason.<a name="line.327"></a>
+<FONT color="green">328</FONT>             */<a name="line.328"></a>
+<FONT color="green">329</FONT>            public static void addCatalog( URL catalogLocation ) throws IOException {<a name="line.329"></a>
+<FONT color="green">330</FONT>                    catalogResolver.getCatalog().parseCatalog( catalogLocation );<a name="line.330"></a>
+<FONT color="green">331</FONT>            }<a name="line.331"></a>
+<FONT color="green">332</FONT>            <a name="line.332"></a>
+<FONT color="green">333</FONT>            /**<a name="line.333"></a>
+<FONT color="green">334</FONT>             * Access the default catalog used by all HTTPBuilder instances.<a name="line.334"></a>
+<FONT color="green">335</FONT>             * @return the static {@link CatalogResolver} instance<a name="line.335"></a>
+<FONT color="green">336</FONT>             */<a name="line.336"></a>
+<FONT color="green">337</FONT>            public static CatalogResolver getCatalogResolver() {<a name="line.337"></a>
+<FONT color="green">338</FONT>                    return catalogResolver;<a name="line.338"></a>
+<FONT color="green">339</FONT>            }<a name="line.339"></a>
+<FONT color="green">340</FONT>            <a name="line.340"></a>
+<FONT color="green">341</FONT>            /**<a name="line.341"></a>
+<FONT color="green">342</FONT>             * Get the default parser used for unregistered content-types.<a name="line.342"></a>
+<FONT color="green">343</FONT>             * @return<a name="line.343"></a>
+<FONT color="green">344</FONT>             */<a name="line.344"></a>
+<FONT color="green">345</FONT>            public Closure getDefaultParser() {<a name="line.345"></a>
+<FONT color="green">346</FONT>                    return this.defaultParser;<a name="line.346"></a>
+<FONT color="green">347</FONT>            }<a name="line.347"></a>
+<FONT color="green">348</FONT>            <a name="line.348"></a>
+<FONT color="green">349</FONT>            /**<a name="line.349"></a>
+<FONT color="green">350</FONT>             * Set the default parser used for unregistered content-types.<a name="line.350"></a>
+<FONT color="green">351</FONT>             * @param defaultParser if <a name="line.351"></a>
+<FONT color="green">352</FONT>             */<a name="line.352"></a>
+<FONT color="green">353</FONT>            public void setDefaultParser( Closure defaultParser ) {<a name="line.353"></a>
+<FONT color="green">354</FONT>                    if ( defaultParser == null ) this.defaultParser = DEFAULT_PARSER;<a name="line.354"></a>
+<FONT color="green">355</FONT>                    this.defaultParser = defaultParser;<a name="line.355"></a>
+<FONT color="green">356</FONT>            }<a name="line.356"></a>
+<FONT color="green">357</FONT>    <a name="line.357"></a>
+<FONT color="green">358</FONT>            /** <a name="line.358"></a>
+<FONT color="green">359</FONT>             * Retrieve a parser for the given response content-type string.  This<a name="line.359"></a>
+<FONT color="green">360</FONT>             * is called by HTTPBuildre to retrieve the correct parser for a given <a name="line.360"></a>
+<FONT color="green">361</FONT>             * content-type.  The parser is then used to decode the response data prior<a name="line.361"></a>
+<FONT color="green">362</FONT>             * to passing it to a response handler. <a name="line.362"></a>
+<FONT color="green">363</FONT>             * @param contentType<a name="line.363"></a>
+<FONT color="green">364</FONT>             * @return parser that can interpret the given response content type,<a name="line.364"></a>
+<FONT color="green">365</FONT>             *   or the default parser if no parser is registered for the given <a name="line.365"></a>
+<FONT color="green">366</FONT>             *   content-type.  It should NOT return a null value.<a name="line.366"></a>
+<FONT color="green">367</FONT>             */<a name="line.367"></a>
+<FONT color="green">368</FONT>            public Closure getAt( Object contentType ) {<a name="line.368"></a>
+<FONT color="green">369</FONT>                    String ct = contentType.toString();<a name="line.369"></a>
+<FONT color="green">370</FONT>                    int idx = ct.indexOf( ';' ); <a name="line.370"></a>
+<FONT color="green">371</FONT>                    if ( idx &gt; 0 ) ct = ct.substring( 0, idx );<a name="line.371"></a>
+<FONT color="green">372</FONT>                    <a name="line.372"></a>
+<FONT color="green">373</FONT>                    Closure parser = registeredParsers.get(ct);<a name="line.373"></a>
+<FONT color="green">374</FONT>                    if ( parser != null ) return parser;<a name="line.374"></a>
+<FONT color="green">375</FONT>    <a name="line.375"></a>
+<FONT color="green">376</FONT>                    log.warn( "Cannot find parser for content-type: " + ct <a name="line.376"></a>
+<FONT color="green">377</FONT>                                            + " -- using default parser.");<a name="line.377"></a>
+<FONT color="green">378</FONT>                    return defaultParser;<a name="line.378"></a>
+<FONT color="green">379</FONT>            }<a name="line.379"></a>
+<FONT color="green">380</FONT>            <a name="line.380"></a>
+<FONT color="green">381</FONT>            /**<a name="line.381"></a>
+<FONT color="green">382</FONT>             * Register a new parser for the given content-type.  The parser closure<a name="line.382"></a>
+<FONT color="green">383</FONT>             * should accept an {@link HttpResponse} argument and return a type suitable<a name="line.383"></a>
+<FONT color="green">384</FONT>             * to be passed as the 'parsed data' argument of a <a name="line.384"></a>
+<FONT color="green">385</FONT>             * {@link RequestConfigDelegate#getResponse() response handler} closure.<a name="line.385"></a>
+<FONT color="green">386</FONT>             * @param contentType  &lt;code&gt;content-type&lt;/code&gt; string<a name="line.386"></a>
+<FONT color="green">387</FONT>             * @param value code that will parse the HttpResponse and return parsed <a name="line.387"></a>
+<FONT color="green">388</FONT>             *   data to the response handler. <a name="line.388"></a>
+<FONT color="green">389</FONT>             */<a name="line.389"></a>
+<FONT color="green">390</FONT>            public void putAt( Object contentType, Closure value ) {<a name="line.390"></a>
+<FONT color="green">391</FONT>                    if ( contentType instanceof ContentType ) {<a name="line.391"></a>
+<FONT color="green">392</FONT>                            for ( String ct : ((ContentType)contentType).getContentTypeStrings() )<a name="line.392"></a>
+<FONT color="green">393</FONT>                                    this.registeredParsers.put( ct, value );<a name="line.393"></a>
+<FONT color="green">394</FONT>                    }<a name="line.394"></a>
+<FONT color="green">395</FONT>                    else this.registeredParsers.put( contentType.toString(), value );<a name="line.395"></a>
+<FONT color="green">396</FONT>            }<a name="line.396"></a>
+<FONT color="green">397</FONT>            <a name="line.397"></a>
+<FONT color="green">398</FONT>            /**<a name="line.398"></a>
+<FONT color="green">399</FONT>             * Alias for {@link #getAt(Object)} to allow property-style access.<a name="line.399"></a>
+<FONT color="green">400</FONT>             * @param key content-type string<a name="line.400"></a>
+<FONT color="green">401</FONT>             * @return<a name="line.401"></a>
+<FONT color="green">402</FONT>             */<a name="line.402"></a>
+<FONT color="green">403</FONT>            public Closure propertyMissing( Object key ) {<a name="line.403"></a>
+<FONT color="green">404</FONT>                    return this.getAt( key );<a name="line.404"></a>
+<FONT color="green">405</FONT>            }<a name="line.405"></a>
+<FONT color="green">406</FONT>            <a name="line.406"></a>
+<FONT color="green">407</FONT>            /**<a name="line.407"></a>
+<FONT color="green">408</FONT>             * Alias for {@link #putAt(Object, Closure)} to allow property-style access.<a name="line.408"></a>
+<FONT color="green">409</FONT>             * @param key content-type string<a name="line.409"></a>
+<FONT color="green">410</FONT>             * @param value parser closure<a name="line.410"></a>
+<FONT color="green">411</FONT>             */<a name="line.411"></a>
+<FONT color="green">412</FONT>            public void propertyMissing( Object key, Closure value ) {<a name="line.412"></a>
+<FONT color="green">413</FONT>                    this.putAt( key, value );<a name="line.413"></a>
+<FONT color="green">414</FONT>            }<a name="line.414"></a>
+<FONT color="green">415</FONT>            <a name="line.415"></a>
+<FONT color="green">416</FONT>            /**<a name="line.416"></a>
+<FONT color="green">417</FONT>             * Iterate over the entire parser map<a name="line.417"></a>
+<FONT color="green">418</FONT>             * @return<a name="line.418"></a>
+<FONT color="green">419</FONT>             */<a name="line.419"></a>
+<FONT color="green">420</FONT>            public Iterator&lt;Map.Entry&lt;String,Closure&gt;&gt; iterator() { <a name="line.420"></a>
+<FONT color="green">421</FONT>                    return this.registeredParsers.entrySet().iterator(); <a name="line.421"></a>
+<FONT color="green">422</FONT>            }<a name="line.422"></a>
+<FONT color="green">423</FONT>    }<a name="line.423"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

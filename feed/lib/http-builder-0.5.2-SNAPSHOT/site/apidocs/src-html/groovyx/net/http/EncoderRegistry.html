@@ -1,0 +1,490 @@
+<HTML>
+<BODY BGCOLOR="white">
+<PRE>
+<FONT color="green">001</FONT>    /*<a name="line.1"></a>
+<FONT color="green">002</FONT>     * Copyright 2008-2011 Thomas Nichols.  http://blog.thomnichols.org<a name="line.2"></a>
+<FONT color="green">003</FONT>     *<a name="line.3"></a>
+<FONT color="green">004</FONT>     * Licensed under the Apache License, Version 2.0 (the "License");<a name="line.4"></a>
+<FONT color="green">005</FONT>     * you may not use this file except in compliance with the License.<a name="line.5"></a>
+<FONT color="green">006</FONT>     * You may obtain a copy of the License at<a name="line.6"></a>
+<FONT color="green">007</FONT>     *<a name="line.7"></a>
+<FONT color="green">008</FONT>     *     http://www.apache.org/licenses/LICENSE-2.0<a name="line.8"></a>
+<FONT color="green">009</FONT>     *<a name="line.9"></a>
+<FONT color="green">010</FONT>     * Unless required by applicable law or agreed to in writing, software<a name="line.10"></a>
+<FONT color="green">011</FONT>     * distributed under the License is distributed on an "AS IS" BASIS,<a name="line.11"></a>
+<FONT color="green">012</FONT>     * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.<a name="line.12"></a>
+<FONT color="green">013</FONT>     * See the License for the specific language governing permissions and<a name="line.13"></a>
+<FONT color="green">014</FONT>     * limitations under the License.<a name="line.14"></a>
+<FONT color="green">015</FONT>     *<a name="line.15"></a>
+<FONT color="green">016</FONT>     * You are receiving this code free of charge, which represents many hours of<a name="line.16"></a>
+<FONT color="green">017</FONT>     * effort from other individuals and corporations.  As a responsible member <a name="line.17"></a>
+<FONT color="green">018</FONT>     * of the community, you are encouraged (but not required) to donate any <a name="line.18"></a>
+<FONT color="green">019</FONT>     * enhancements or improvements back to the community under a similar open <a name="line.19"></a>
+<FONT color="green">020</FONT>     * source license.  Thank you. -TMN<a name="line.20"></a>
+<FONT color="green">021</FONT>     */<a name="line.21"></a>
+<FONT color="green">022</FONT>    package groovyx.net.http;<a name="line.22"></a>
+<FONT color="green">023</FONT>    <a name="line.23"></a>
+<FONT color="green">024</FONT>    import groovy.lang.Closure;<a name="line.24"></a>
+<FONT color="green">025</FONT>    import groovy.lang.GString;<a name="line.25"></a>
+<FONT color="green">026</FONT>    import groovy.lang.Writable;<a name="line.26"></a>
+<FONT color="green">027</FONT>    import groovy.xml.StreamingMarkupBuilder;<a name="line.27"></a>
+<FONT color="green">028</FONT>    import groovyx.net.http.HTTPBuilder.RequestConfigDelegate;<a name="line.28"></a>
+<FONT color="green">029</FONT>    <a name="line.29"></a>
+<FONT color="green">030</FONT>    import java.io.BufferedReader;<a name="line.30"></a>
+<FONT color="green">031</FONT>    import java.io.ByteArrayInputStream;<a name="line.31"></a>
+<FONT color="green">032</FONT>    import java.io.ByteArrayOutputStream;<a name="line.32"></a>
+<FONT color="green">033</FONT>    import java.io.IOException;<a name="line.33"></a>
+<FONT color="green">034</FONT>    import java.io.InputStream;<a name="line.34"></a>
+<FONT color="green">035</FONT>    import java.io.PrintWriter;<a name="line.35"></a>
+<FONT color="green">036</FONT>    import java.io.Reader;<a name="line.36"></a>
+<FONT color="green">037</FONT>    import java.io.StringWriter;<a name="line.37"></a>
+<FONT color="green">038</FONT>    import java.io.UnsupportedEncodingException;<a name="line.38"></a>
+<FONT color="green">039</FONT>    import java.nio.charset.Charset;<a name="line.39"></a>
+<FONT color="green">040</FONT>    import java.util.ArrayList;<a name="line.40"></a>
+<FONT color="green">041</FONT>    import java.util.Collection;<a name="line.41"></a>
+<FONT color="green">042</FONT>    import java.util.HashMap;<a name="line.42"></a>
+<FONT color="green">043</FONT>    import java.util.Iterator;<a name="line.43"></a>
+<FONT color="green">044</FONT>    import java.util.List;<a name="line.44"></a>
+<FONT color="green">045</FONT>    import java.util.Map;<a name="line.45"></a>
+<FONT color="green">046</FONT>    <a name="line.46"></a>
+<FONT color="green">047</FONT>    import net.sf.json.JSON;<a name="line.47"></a>
+<FONT color="green">048</FONT>    import net.sf.json.JSONArray;<a name="line.48"></a>
+<FONT color="green">049</FONT>    import net.sf.json.JSONObject;<a name="line.49"></a>
+<FONT color="green">050</FONT>    import net.sf.json.groovy.JsonGroovyBuilder;<a name="line.50"></a>
+<FONT color="green">051</FONT>    <a name="line.51"></a>
+<FONT color="green">052</FONT>    import org.apache.http.HttpEntity;<a name="line.52"></a>
+<FONT color="green">053</FONT>    import org.apache.http.HttpEntityEnclosingRequest;<a name="line.53"></a>
+<FONT color="green">054</FONT>    import org.apache.http.NameValuePair;<a name="line.54"></a>
+<FONT color="green">055</FONT>    import org.apache.http.client.entity.UrlEncodedFormEntity;<a name="line.55"></a>
+<FONT color="green">056</FONT>    import org.apache.http.entity.InputStreamEntity;<a name="line.56"></a>
+<FONT color="green">057</FONT>    import org.apache.http.entity.StringEntity;<a name="line.57"></a>
+<FONT color="green">058</FONT>    import org.apache.http.message.BasicNameValuePair;<a name="line.58"></a>
+<FONT color="green">059</FONT>    import org.codehaus.groovy.runtime.DefaultGroovyMethods;<a name="line.59"></a>
+<FONT color="green">060</FONT>    import org.codehaus.groovy.runtime.MethodClosure;<a name="line.60"></a>
+<FONT color="green">061</FONT>    <a name="line.61"></a>
+<FONT color="green">062</FONT>    <a name="line.62"></a>
+<FONT color="green">063</FONT>    /**<a name="line.63"></a>
+<FONT color="green">064</FONT>     * &lt;p&gt;This class handles creation of the request body (i.e. for a <a name="line.64"></a>
+<FONT color="green">065</FONT>     * PUT or POST operation) based on content-type.   When a <a name="line.65"></a>
+<FONT color="green">066</FONT>     * {@link RequestConfigDelegate#setBody(Object) body} is set from the builder, it is <a name="line.66"></a>
+<FONT color="green">067</FONT>     * processed based on the {@link RequestConfigDelegate#getRequestContentType() <a name="line.67"></a>
+<FONT color="green">068</FONT>     * request content-type}.  For instance, the {@link #encodeForm(Map)} method <a name="line.68"></a>
+<FONT color="green">069</FONT>     * will be invoked if the request content-type is form-urlencoded, which will <a name="line.69"></a>
+<FONT color="green">070</FONT>     * cause the following:&lt;code&gt;body=[a:1, b:'two']&lt;/code&gt; to be encoded as <a name="line.70"></a>
+<FONT color="green">071</FONT>     * the equivalent &lt;code&gt;a=1&amp;b=two&lt;/code&gt; in the request body.&lt;/p&gt;<a name="line.71"></a>
+<FONT color="green">072</FONT>     * <a name="line.72"></a>
+<FONT color="green">073</FONT>     * &lt;p&gt;Most default encoders can handle a closure as a request body.  In this <a name="line.73"></a>
+<FONT color="green">074</FONT>     * case, the closure is executed and a suitable 'builder' passed to the <a name="line.74"></a>
+<FONT color="green">075</FONT>     * closure that is  used for constructing the content.  In the case of <a name="line.75"></a>
+<FONT color="green">076</FONT>     * binary encoding this would be an OutputStream; for TEXT encoding it would<a name="line.76"></a>
+<FONT color="green">077</FONT>     * be a PrintWriter, and for XML it would be an already-bound <a name="line.77"></a>
+<FONT color="green">078</FONT>     * {@link StreamingMarkupBuilder}. See each &lt;code&gt;encode...&lt;/code&gt; method <a name="line.78"></a>
+<FONT color="green">079</FONT>     * for details for each particular content-type.&lt;/p&gt;<a name="line.79"></a>
+<FONT color="green">080</FONT>     * <a name="line.80"></a>
+<FONT color="green">081</FONT>     * &lt;p&gt;Contrary to its name, this class does not have anything to do with the <a name="line.81"></a>
+<FONT color="green">082</FONT>     * &lt;code&gt;content-encoding&lt;/code&gt; HTTP header.  &lt;/p&gt;<a name="line.82"></a>
+<FONT color="green">083</FONT>     * <a name="line.83"></a>
+<FONT color="green">084</FONT>     * @see RequestConfigDelegate#setBody(Object)<a name="line.84"></a>
+<FONT color="green">085</FONT>     * @see RequestConfigDelegate#send(Object, Object)<a name="line.85"></a>
+<FONT color="green">086</FONT>     * @author &lt;a href='mailto:tomstrummer+httpbuilder@gmail.com'&gt;Tom Nichols&lt;/a&gt;<a name="line.86"></a>
+<FONT color="green">087</FONT>     */<a name="line.87"></a>
+<FONT color="green">088</FONT>    public class EncoderRegistry {<a name="line.88"></a>
+<FONT color="green">089</FONT>            <a name="line.89"></a>
+<FONT color="green">090</FONT>            Charset charset = Charset.defaultCharset(); // 1.5<a name="line.90"></a>
+<FONT color="green">091</FONT>            private Map&lt;String,Closure&gt; registeredEncoders = buildDefaultEncoderMap();<a name="line.91"></a>
+<FONT color="green">092</FONT>    <a name="line.92"></a>
+<FONT color="green">093</FONT>            /**<a name="line.93"></a>
+<FONT color="green">094</FONT>             * Set the charset used in the content-type header of all requests that send<a name="line.94"></a>
+<FONT color="green">095</FONT>             * textual data.  This must be a chaset supported by the Java platform<a name="line.95"></a>
+<FONT color="green">096</FONT>             * @see Charset#forName(String)<a name="line.96"></a>
+<FONT color="green">097</FONT>             * @param charset <a name="line.97"></a>
+<FONT color="green">098</FONT>             */<a name="line.98"></a>
+<FONT color="green">099</FONT>            public void setCharset( String charset ) { <a name="line.99"></a>
+<FONT color="green">100</FONT>                    this.charset = Charset.forName(charset);<a name="line.100"></a>
+<FONT color="green">101</FONT>            }<a name="line.101"></a>
+<FONT color="green">102</FONT>            <a name="line.102"></a>
+<FONT color="green">103</FONT>            /**<a name="line.103"></a>
+<FONT color="green">104</FONT>             * Default request encoder for a binary stream.  Acceptable argument <a name="line.104"></a>
+<FONT color="green">105</FONT>             * types are:<a name="line.105"></a>
+<FONT color="green">106</FONT>             * &lt;ul&gt;<a name="line.106"></a>
+<FONT color="green">107</FONT>             *   &lt;li&gt;InputStream&lt;/li&gt;<a name="line.107"></a>
+<FONT color="green">108</FONT>             *   &lt;li&gt;byte[] / ByteArrayOutputStream&lt;/li&gt;<a name="line.108"></a>
+<FONT color="green">109</FONT>             *   &lt;li&gt;Closure&lt;/li&gt;<a name="line.109"></a>
+<FONT color="green">110</FONT>             * &lt;/ul&gt;<a name="line.110"></a>
+<FONT color="green">111</FONT>             * If a closure is given, it is executed with an OutputStream passed<a name="line.111"></a>
+<FONT color="green">112</FONT>             * as the single closure argument.  Any data sent to the stream from the <a name="line.112"></a>
+<FONT color="green">113</FONT>             * body of the closure is used as the request content body.<a name="line.113"></a>
+<FONT color="green">114</FONT>             * @param data<a name="line.114"></a>
+<FONT color="green">115</FONT>             * @return an {@link HttpEntity} encapsulating this request data<a name="line.115"></a>
+<FONT color="green">116</FONT>             * @throws UnsupportedEncodingException<a name="line.116"></a>
+<FONT color="green">117</FONT>             */<a name="line.117"></a>
+<FONT color="green">118</FONT>            public InputStreamEntity encodeStream( Object data, Object contentType ) <a name="line.118"></a>
+<FONT color="green">119</FONT>                            throws UnsupportedEncodingException {<a name="line.119"></a>
+<FONT color="green">120</FONT>                    InputStreamEntity entity = null;<a name="line.120"></a>
+<FONT color="green">121</FONT>                    <a name="line.121"></a>
+<FONT color="green">122</FONT>                    if ( data instanceof ByteArrayInputStream ) {<a name="line.122"></a>
+<FONT color="green">123</FONT>                            // special case for ByteArrayIS so that we can set the content length.<a name="line.123"></a>
+<FONT color="green">124</FONT>                            ByteArrayInputStream in = ((ByteArrayInputStream)data);<a name="line.124"></a>
+<FONT color="green">125</FONT>                            entity = new InputStreamEntity( in, in.available() );<a name="line.125"></a>
+<FONT color="green">126</FONT>                    }<a name="line.126"></a>
+<FONT color="green">127</FONT>                    else if ( data instanceof InputStream ) {<a name="line.127"></a>
+<FONT color="green">128</FONT>                            entity = new InputStreamEntity( (InputStream)data, -1 );<a name="line.128"></a>
+<FONT color="green">129</FONT>                    }<a name="line.129"></a>
+<FONT color="green">130</FONT>                    else if ( data instanceof byte[] ) {<a name="line.130"></a>
+<FONT color="green">131</FONT>                            byte[] out = ((byte[])data); <a name="line.131"></a>
+<FONT color="green">132</FONT>                            entity = new InputStreamEntity( new ByteArrayInputStream(<a name="line.132"></a>
+<FONT color="green">133</FONT>                                            out), out.length );<a name="line.133"></a>
+<FONT color="green">134</FONT>                    }<a name="line.134"></a>
+<FONT color="green">135</FONT>                    else if ( data instanceof ByteArrayOutputStream ) {<a name="line.135"></a>
+<FONT color="green">136</FONT>                            ByteArrayOutputStream out = ((ByteArrayOutputStream)data); <a name="line.136"></a>
+<FONT color="green">137</FONT>                            entity = new InputStreamEntity( new ByteArrayInputStream(<a name="line.137"></a>
+<FONT color="green">138</FONT>                                            out.toByteArray()), out.size() );<a name="line.138"></a>
+<FONT color="green">139</FONT>                    }<a name="line.139"></a>
+<FONT color="green">140</FONT>                    else if ( data instanceof Closure ) {<a name="line.140"></a>
+<FONT color="green">141</FONT>                            ByteArrayOutputStream out = new ByteArrayOutputStream();<a name="line.141"></a>
+<FONT color="green">142</FONT>                            ((Closure)data).call( out ); // data is written to out<a name="line.142"></a>
+<FONT color="green">143</FONT>                            entity = new InputStreamEntity( new ByteArrayInputStream( <a name="line.143"></a>
+<FONT color="green">144</FONT>                                            out.toByteArray()), out.size() );<a name="line.144"></a>
+<FONT color="green">145</FONT>                    }<a name="line.145"></a>
+<FONT color="green">146</FONT>    <a name="line.146"></a>
+<FONT color="green">147</FONT>                    if ( entity == null ) throw new IllegalArgumentException( <a name="line.147"></a>
+<FONT color="green">148</FONT>                                    "Don't know how to encode " + data + " as a byte stream" );<a name="line.148"></a>
+<FONT color="green">149</FONT>                    <a name="line.149"></a>
+<FONT color="green">150</FONT>                    if ( contentType == null ) contentType = ContentType.BINARY;<a name="line.150"></a>
+<FONT color="green">151</FONT>                    entity.setContentType( contentType.toString() );<a name="line.151"></a>
+<FONT color="green">152</FONT>                    return entity;<a name="line.152"></a>
+<FONT color="green">153</FONT>            }<a name="line.153"></a>
+<FONT color="green">154</FONT>            <a name="line.154"></a>
+<FONT color="green">155</FONT>            /**<a name="line.155"></a>
+<FONT color="green">156</FONT>             * Default handler used for a plain text content-type.  Acceptable argument<a name="line.156"></a>
+<FONT color="green">157</FONT>             * types are:<a name="line.157"></a>
+<FONT color="green">158</FONT>             * &lt;ul&gt;<a name="line.158"></a>
+<FONT color="green">159</FONT>             *   &lt;li&gt;Closure&lt;/li&gt;<a name="line.159"></a>
+<FONT color="green">160</FONT>             *   &lt;li&gt;Writable&lt;/li&gt;<a name="line.160"></a>
+<FONT color="green">161</FONT>             *   &lt;li&gt;Reader&lt;/li&gt;<a name="line.161"></a>
+<FONT color="green">162</FONT>             * &lt;/ul&gt;<a name="line.162"></a>
+<FONT color="green">163</FONT>             * For Closure argument, a {@link PrintWriter} is passed as the single <a name="line.163"></a>
+<FONT color="green">164</FONT>             * argument to the closure.  Any data sent to the writer from the <a name="line.164"></a>
+<FONT color="green">165</FONT>             * closure will be sent to the request content body.<a name="line.165"></a>
+<FONT color="green">166</FONT>             * @param data<a name="line.166"></a>
+<FONT color="green">167</FONT>             * @return an {@link HttpEntity} encapsulating this request data<a name="line.167"></a>
+<FONT color="green">168</FONT>             * @throws IOException<a name="line.168"></a>
+<FONT color="green">169</FONT>             */<a name="line.169"></a>
+<FONT color="green">170</FONT>            public HttpEntity encodeText( Object data, Object contentType ) throws IOException {<a name="line.170"></a>
+<FONT color="green">171</FONT>                    if ( data instanceof Closure ) {<a name="line.171"></a>
+<FONT color="green">172</FONT>                            StringWriter out = new StringWriter();<a name="line.172"></a>
+<FONT color="green">173</FONT>                            PrintWriter writer = new PrintWriter( out );<a name="line.173"></a>
+<FONT color="green">174</FONT>                            ((Closure)data).call( writer );<a name="line.174"></a>
+<FONT color="green">175</FONT>                            writer.close();<a name="line.175"></a>
+<FONT color="green">176</FONT>                            out.flush();<a name="line.176"></a>
+<FONT color="green">177</FONT>                            data = out;<a name="line.177"></a>
+<FONT color="green">178</FONT>                    }<a name="line.178"></a>
+<FONT color="green">179</FONT>                    else if ( data instanceof Writable ) {<a name="line.179"></a>
+<FONT color="green">180</FONT>                            StringWriter out = new StringWriter();<a name="line.180"></a>
+<FONT color="green">181</FONT>                            ((Writable)data).writeTo(out);<a name="line.181"></a>
+<FONT color="green">182</FONT>                            out.flush();<a name="line.182"></a>
+<FONT color="green">183</FONT>                            data = out;<a name="line.183"></a>
+<FONT color="green">184</FONT>                    }<a name="line.184"></a>
+<FONT color="green">185</FONT>                    else if ( data instanceof Reader &amp;&amp; ! (data instanceof BufferedReader) )<a name="line.185"></a>
+<FONT color="green">186</FONT>                            data = new BufferedReader( (Reader)data );<a name="line.186"></a>
+<FONT color="green">187</FONT>                    if ( data instanceof BufferedReader ) {<a name="line.187"></a>
+<FONT color="green">188</FONT>                            StringWriter out = new StringWriter();<a name="line.188"></a>
+<FONT color="green">189</FONT>                            DefaultGroovyMethods.leftShift( out, (BufferedReader)data );<a name="line.189"></a>
+<FONT color="green">190</FONT>                            <a name="line.190"></a>
+<FONT color="green">191</FONT>                            data = out;<a name="line.191"></a>
+<FONT color="green">192</FONT>                    }<a name="line.192"></a>
+<FONT color="green">193</FONT>                    // if data is a String, we are already covered.<a name="line.193"></a>
+<FONT color="green">194</FONT>                    if ( contentType == null ) contentType = ContentType.TEXT;<a name="line.194"></a>
+<FONT color="green">195</FONT>                    return createEntity( contentType, data.toString() );<a name="line.195"></a>
+<FONT color="green">196</FONT>            }<a name="line.196"></a>
+<FONT color="green">197</FONT>            <a name="line.197"></a>
+<FONT color="green">198</FONT>            /**<a name="line.198"></a>
+<FONT color="green">199</FONT>             * Set the request body as a url-encoded list of parameters.  This is <a name="line.199"></a>
+<FONT color="green">200</FONT>             * typically used to simulate a HTTP form POST. <a name="line.200"></a>
+<FONT color="green">201</FONT>             * For multi-valued parameters, enclose the values in a list, e.g. <a name="line.201"></a>
+<FONT color="green">202</FONT>             * &lt;pre&gt;[ key1 : ['val1', 'val2'], key2 : 'etc.' ]&lt;/pre&gt;<a name="line.202"></a>
+<FONT color="green">203</FONT>             * @param params<a name="line.203"></a>
+<FONT color="green">204</FONT>             * @return an {@link HttpEntity} encapsulating this request data<a name="line.204"></a>
+<FONT color="green">205</FONT>             * @throws UnsupportedEncodingException<a name="line.205"></a>
+<FONT color="green">206</FONT>             */<a name="line.206"></a>
+<FONT color="green">207</FONT>            public UrlEncodedFormEntity encodeForm( Map&lt;?,?&gt; params ) <a name="line.207"></a>
+<FONT color="green">208</FONT>                            throws UnsupportedEncodingException {<a name="line.208"></a>
+<FONT color="green">209</FONT>                    return encodeForm( params, null );<a name="line.209"></a>
+<FONT color="green">210</FONT>            }<a name="line.210"></a>
+<FONT color="green">211</FONT>            <a name="line.211"></a>
+<FONT color="green">212</FONT>            public UrlEncodedFormEntity encodeForm( Map&lt;?,?&gt; params, Object contentType ) <a name="line.212"></a>
+<FONT color="green">213</FONT>                            throws UnsupportedEncodingException {<a name="line.213"></a>
+<FONT color="green">214</FONT>                    List&lt;NameValuePair&gt; paramList = new ArrayList&lt;NameValuePair&gt;();<a name="line.214"></a>
+<FONT color="green">215</FONT>    <a name="line.215"></a>
+<FONT color="green">216</FONT>                    for ( Object key : params.keySet() ) {<a name="line.216"></a>
+<FONT color="green">217</FONT>                            Object val = params.get( key );<a name="line.217"></a>
+<FONT color="green">218</FONT>                            if ( val instanceof List&lt;?&gt; ) <a name="line.218"></a>
+<FONT color="green">219</FONT>                                    for ( Object subVal : (List&lt;?&gt;)val ) <a name="line.219"></a>
+<FONT color="green">220</FONT>                                            paramList.add( new BasicNameValuePair( key.toString(), <a name="line.220"></a>
+<FONT color="green">221</FONT>                                                            ( subVal == null ) ? "" : subVal.toString() ) );<a name="line.221"></a>
+<FONT color="green">222</FONT>    <a name="line.222"></a>
+<FONT color="green">223</FONT>                            else paramList.add( new BasicNameValuePair( key.toString(), <a name="line.223"></a>
+<FONT color="green">224</FONT>                                            ( val == null ) ? "" : val.toString() ) );<a name="line.224"></a>
+<FONT color="green">225</FONT>                    }<a name="line.225"></a>
+<FONT color="green">226</FONT>                            <a name="line.226"></a>
+<FONT color="green">227</FONT>                    UrlEncodedFormEntity e = new UrlEncodedFormEntity( paramList, charset.name() );<a name="line.227"></a>
+<FONT color="green">228</FONT>                    if ( contentType != null ) e.setContentType( contentType.toString() );<a name="line.228"></a>
+<FONT color="green">229</FONT>                    return e;<a name="line.229"></a>
+<FONT color="green">230</FONT>                    <a name="line.230"></a>
+<FONT color="green">231</FONT>            }<a name="line.231"></a>
+<FONT color="green">232</FONT>            <a name="line.232"></a>
+<FONT color="green">233</FONT>            /**<a name="line.233"></a>
+<FONT color="green">234</FONT>             * Accepts a String as a url-encoded form post.  This method assumes the <a name="line.234"></a>
+<FONT color="green">235</FONT>             * String is an already-encoded POST string.<a name="line.235"></a>
+<FONT color="green">236</FONT>             * @param formData a url-encoded form POST string.  See <a name="line.236"></a>
+<FONT color="green">237</FONT>             *  &lt;a href='http://www.w3.org/TR/html401/interact/forms.html#h-17.13.4.1'&gt;<a name="line.237"></a>
+<FONT color="green">238</FONT>             *  The W3C spec&lt;/a&gt; for more info.<a name="line.238"></a>
+<FONT color="green">239</FONT>             * @return an {@link HttpEntity} encapsulating this request data<a name="line.239"></a>
+<FONT color="green">240</FONT>             * @throws UnsupportedEncodingException<a name="line.240"></a>
+<FONT color="green">241</FONT>             */<a name="line.241"></a>
+<FONT color="green">242</FONT>            public HttpEntity encodeForm( String formData, Object contentType ) throws UnsupportedEncodingException {<a name="line.242"></a>
+<FONT color="green">243</FONT>                    if ( contentType == null ) contentType = ContentType.URLENC;<a name="line.243"></a>
+<FONT color="green">244</FONT>                    return this.createEntity( contentType, formData );<a name="line.244"></a>
+<FONT color="green">245</FONT>            }<a name="line.245"></a>
+<FONT color="green">246</FONT>            <a name="line.246"></a>
+<FONT color="green">247</FONT>            /**<a name="line.247"></a>
+<FONT color="green">248</FONT>             * Encode the content as XML.  The argument may be either an object whose <a name="line.248"></a>
+<FONT color="green">249</FONT>             * &lt;code&gt;toString&lt;/code&gt; produces valid markup, or a Closure which will be <a name="line.249"></a>
+<FONT color="green">250</FONT>             * interpreted as a builder definition.  A closure argument is <a name="line.250"></a>
+<FONT color="green">251</FONT>             * passed to {@link StreamingMarkupBuilder#bind(groovy.lang.Closure)}.<a name="line.251"></a>
+<FONT color="green">252</FONT>             * @param xml data that defines the XML structure<a name="line.252"></a>
+<FONT color="green">253</FONT>             * @return an {@link HttpEntity} encapsulating this request data<a name="line.253"></a>
+<FONT color="green">254</FONT>             * @throws UnsupportedEncodingException<a name="line.254"></a>
+<FONT color="green">255</FONT>             */<a name="line.255"></a>
+<FONT color="green">256</FONT>            public HttpEntity encodeXML( Object xml, Object contentType ) <a name="line.256"></a>
+<FONT color="green">257</FONT>                            throws UnsupportedEncodingException {<a name="line.257"></a>
+<FONT color="green">258</FONT>                    if ( xml instanceof Closure ) {<a name="line.258"></a>
+<FONT color="green">259</FONT>                            StreamingMarkupBuilder smb = new StreamingMarkupBuilder();<a name="line.259"></a>
+<FONT color="green">260</FONT>                            xml = smb.bind( xml );<a name="line.260"></a>
+<FONT color="green">261</FONT>                    }<a name="line.261"></a>
+<FONT color="green">262</FONT>                    if ( contentType == null ) contentType = ContentType.XML;<a name="line.262"></a>
+<FONT color="green">263</FONT>                    return createEntity( contentType, xml.toString() );<a name="line.263"></a>
+<FONT color="green">264</FONT>            }<a name="line.264"></a>
+<FONT color="green">265</FONT>            <a name="line.265"></a>
+<FONT color="green">266</FONT>            /**<a name="line.266"></a>
+<FONT color="green">267</FONT>             * &lt;p&gt;Accepts a Collection or a JavaBean object which is converted to JSON.  <a name="line.267"></a>
+<FONT color="green">268</FONT>             * A Map or POJO/POGO will be converted to a {@link JSONObject}, and any <a name="line.268"></a>
+<FONT color="green">269</FONT>             * other collection type will be converted to a {@link JSONArray}.  A<a name="line.269"></a>
+<FONT color="green">270</FONT>             * String or GString will be interpreted as valid JSON and passed directly<a name="line.270"></a>
+<FONT color="green">271</FONT>             * as the request body (with charset conversion if necessary.)&lt;/p&gt; <a name="line.271"></a>
+<FONT color="green">272</FONT>             * <a name="line.272"></a>
+<FONT color="green">273</FONT>             * &lt;p&gt;If a Closure is passed as the model, it will be executed as if it were <a name="line.273"></a>
+<FONT color="green">274</FONT>             * a JSON object definition passed to a {@link JsonGroovyBuilder}.  In order<a name="line.274"></a>
+<FONT color="green">275</FONT>             * for the closure to be interpreted correctly, there must be a 'root' <a name="line.275"></a>
+<FONT color="green">276</FONT>             * element immediately inside the closure.  For example:&lt;/p&gt;<a name="line.276"></a>
+<FONT color="green">277</FONT>             * <a name="line.277"></a>
+<FONT color="green">278</FONT>             * &lt;pre&gt;builder.post( JSON ) {<a name="line.278"></a>
+<FONT color="green">279</FONT>             *   body = {<a name="line.279"></a>
+<FONT color="green">280</FONT>             *     root {<a name="line.280"></a>
+<FONT color="green">281</FONT>             *       first {<a name="line.281"></a>
+<FONT color="green">282</FONT>             *         one = 1<a name="line.282"></a>
+<FONT color="green">283</FONT>             *         two = '2'<a name="line.283"></a>
+<FONT color="green">284</FONT>             *       }<a name="line.284"></a>
+<FONT color="green">285</FONT>             *       second = 'some string'<a name="line.285"></a>
+<FONT color="green">286</FONT>             *     }<a name="line.286"></a>
+<FONT color="green">287</FONT>             *   }<a name="line.287"></a>
+<FONT color="green">288</FONT>             * }&lt;/pre&gt;<a name="line.288"></a>
+<FONT color="green">289</FONT>             * &lt;p&gt; will return the following JSON string:&lt;pre&gt;<a name="line.289"></a>
+<FONT color="green">290</FONT>             * {"root":{"first":{"one":1,"two":"2"},"second":"some string"}}&lt;/pre&gt;&lt;/p&gt;<a name="line.290"></a>
+<FONT color="green">291</FONT>             *  <a name="line.291"></a>
+<FONT color="green">292</FONT>             * @param model data to be converted to JSON, as specified above.<a name="line.292"></a>
+<FONT color="green">293</FONT>             * @return an {@link HttpEntity} encapsulating this request data<a name="line.293"></a>
+<FONT color="green">294</FONT>             * @throws UnsupportedEncodingException<a name="line.294"></a>
+<FONT color="green">295</FONT>             */<a name="line.295"></a>
+<FONT color="green">296</FONT>            @SuppressWarnings("unchecked")<a name="line.296"></a>
+<FONT color="green">297</FONT>            public HttpEntity encodeJSON( Object model, Object contentType ) throws UnsupportedEncodingException {<a name="line.297"></a>
+<FONT color="green">298</FONT>                    <a name="line.298"></a>
+<FONT color="green">299</FONT>                    Object json;    <a name="line.299"></a>
+<FONT color="green">300</FONT>                    if ( model instanceof Map ) {<a name="line.300"></a>
+<FONT color="green">301</FONT>                            json = new JSONObject();<a name="line.301"></a>
+<FONT color="green">302</FONT>                            ((JSONObject)json).putAll( (Map)model );<a name="line.302"></a>
+<FONT color="green">303</FONT>                    }<a name="line.303"></a>
+<FONT color="green">304</FONT>                    else if ( model instanceof Collection ) {<a name="line.304"></a>
+<FONT color="green">305</FONT>                            json = new JSONArray();<a name="line.305"></a>
+<FONT color="green">306</FONT>                            ((JSONArray)json).addAll( (Collection)model );<a name="line.306"></a>
+<FONT color="green">307</FONT>                    }<a name="line.307"></a>
+<FONT color="green">308</FONT>                    else if ( model instanceof Closure ) {<a name="line.308"></a>
+<FONT color="green">309</FONT>                            Closure closure = (Closure)model;<a name="line.309"></a>
+<FONT color="green">310</FONT>                            closure.setDelegate( new JsonGroovyBuilder() );<a name="line.310"></a>
+<FONT color="green">311</FONT>                            json = (JSON)closure.call();<a name="line.311"></a>
+<FONT color="green">312</FONT>                    }<a name="line.312"></a>
+<FONT color="green">313</FONT>                    else if ( model instanceof String || model instanceof GString )<a name="line.313"></a>
+<FONT color="green">314</FONT>                            json = model; // assume string is valid JSON already.<a name="line.314"></a>
+<FONT color="green">315</FONT>                    else json = JSONObject.fromObject( model ); // Assume object is a JavaBean<a name="line.315"></a>
+<FONT color="green">316</FONT>                    <a name="line.316"></a>
+<FONT color="green">317</FONT>                    if ( contentType == null ) contentType = ContentType.JSON;<a name="line.317"></a>
+<FONT color="green">318</FONT>                    return this.createEntity( contentType, json.toString() );<a name="line.318"></a>
+<FONT color="green">319</FONT>            }<a name="line.319"></a>
+<FONT color="green">320</FONT>            <a name="line.320"></a>
+<FONT color="green">321</FONT>            /**<a name="line.321"></a>
+<FONT color="green">322</FONT>             * Helper method used by encoder methods to create an {@link HttpEntity} <a name="line.322"></a>
+<FONT color="green">323</FONT>             * instance that encapsulates the request data.  This may be used by any <a name="line.323"></a>
+<FONT color="green">324</FONT>             * non-streaming encoder that needs to send textual data.  It also sets the <a name="line.324"></a>
+<FONT color="green">325</FONT>             * {@link #setCharset(String) charset} portion of the content-type header. <a name="line.325"></a>
+<FONT color="green">326</FONT>             * <a name="line.326"></a>
+<FONT color="green">327</FONT>             * @param ct content-type of the data<a name="line.327"></a>
+<FONT color="green">328</FONT>             * @param data textual request data to be encoded <a name="line.328"></a>
+<FONT color="green">329</FONT>             * @return an instance to be used for the <a name="line.329"></a>
+<FONT color="green">330</FONT>             *  {@link HttpEntityEnclosingRequest#setEntity(HttpEntity) request content} <a name="line.330"></a>
+<FONT color="green">331</FONT>             * @throws UnsupportedEncodingException<a name="line.331"></a>
+<FONT color="green">332</FONT>             */<a name="line.332"></a>
+<FONT color="green">333</FONT>            protected StringEntity createEntity( Object ct, String data ) <a name="line.333"></a>
+<FONT color="green">334</FONT>                            throws UnsupportedEncodingException {<a name="line.334"></a>
+<FONT color="green">335</FONT>                    StringEntity entity = new StringEntity( data, charset.toString() );<a name="line.335"></a>
+<FONT color="green">336</FONT>                    entity.setContentType( ct.toString() );<a name="line.336"></a>
+<FONT color="green">337</FONT>                    return entity;<a name="line.337"></a>
+<FONT color="green">338</FONT>            }<a name="line.338"></a>
+<FONT color="green">339</FONT>            <a name="line.339"></a>
+<FONT color="green">340</FONT>            /**<a name="line.340"></a>
+<FONT color="green">341</FONT>             * Returns a map of default encoders.  Override this method to change <a name="line.341"></a>
+<FONT color="green">342</FONT>             * what encoders are registered by default.  You can of course call<a name="line.342"></a>
+<FONT color="green">343</FONT>             * &lt;code&gt;super.buildDefaultEncoderMap()&lt;/code&gt; and then add or remove <a name="line.343"></a>
+<FONT color="green">344</FONT>             * from that result as well.<a name="line.344"></a>
+<FONT color="green">345</FONT>             */<a name="line.345"></a>
+<FONT color="green">346</FONT>            protected Map&lt;String,Closure&gt; buildDefaultEncoderMap() {<a name="line.346"></a>
+<FONT color="green">347</FONT>                    Map&lt;String,Closure&gt; encoders = new HashMap&lt;String,Closure&gt;();<a name="line.347"></a>
+<FONT color="green">348</FONT>                    <a name="line.348"></a>
+<FONT color="green">349</FONT>                    encoders.put( ContentType.BINARY.toString(), new MethodClosure(this,"encodeStream") );<a name="line.349"></a>
+<FONT color="green">350</FONT>                    encoders.put( ContentType.TEXT.toString(), new MethodClosure( this, "encodeText" ) );<a name="line.350"></a>
+<FONT color="green">351</FONT>                    encoders.put( ContentType.URLENC.toString(), new MethodClosure( this, "encodeForm" ) );<a name="line.351"></a>
+<FONT color="green">352</FONT>                    <a name="line.352"></a>
+<FONT color="green">353</FONT>                    Closure encClosure = new MethodClosure(this,"encodeXML");<a name="line.353"></a>
+<FONT color="green">354</FONT>                    for ( String ct : ContentType.XML.getContentTypeStrings() )<a name="line.354"></a>
+<FONT color="green">355</FONT>                            encoders.put( ct, encClosure );<a name="line.355"></a>
+<FONT color="green">356</FONT>                    encoders.put( ContentType.HTML.toString(), encClosure );<a name="line.356"></a>
+<FONT color="green">357</FONT>                    <a name="line.357"></a>
+<FONT color="green">358</FONT>                    encClosure = new MethodClosure(this,"encodeJSON");<a name="line.358"></a>
+<FONT color="green">359</FONT>                    for ( String ct : ContentType.JSON.getContentTypeStrings() )<a name="line.359"></a>
+<FONT color="green">360</FONT>                            encoders.put( ct, encClosure );<a name="line.360"></a>
+<FONT color="green">361</FONT>                    <a name="line.361"></a>
+<FONT color="green">362</FONT>                    return encoders;<a name="line.362"></a>
+<FONT color="green">363</FONT>            }<a name="line.363"></a>
+<FONT color="green">364</FONT>            <a name="line.364"></a>
+<FONT color="green">365</FONT>            /** <a name="line.365"></a>
+<FONT color="green">366</FONT>             * Retrieve a encoder for the given content-type.  This<a name="line.366"></a>
+<FONT color="green">367</FONT>             * is called by HTTPBuilder to retrieve the correct encoder for a given <a name="line.367"></a>
+<FONT color="green">368</FONT>             * content-type.  The encoder is then used to serialize the request data <a name="line.368"></a>
+<FONT color="green">369</FONT>             * in the request body. <a name="line.369"></a>
+<FONT color="green">370</FONT>             * @param contentType<a name="line.370"></a>
+<FONT color="green">371</FONT>             * @return encoder that can interpret the given content type,<a name="line.371"></a>
+<FONT color="green">372</FONT>             *   or null.<a name="line.372"></a>
+<FONT color="green">373</FONT>             */<a name="line.373"></a>
+<FONT color="green">374</FONT>            public Closure getAt( Object contentType ) {<a name="line.374"></a>
+<FONT color="green">375</FONT>                    String ct = contentType.toString();<a name="line.375"></a>
+<FONT color="green">376</FONT>                    int idx = ct.indexOf( ';' ); <a name="line.376"></a>
+<FONT color="green">377</FONT>                    if ( idx &gt; 0 ) ct = ct.substring( 0, idx );<a name="line.377"></a>
+<FONT color="green">378</FONT>                    <a name="line.378"></a>
+<FONT color="green">379</FONT>                    return registeredEncoders.get(ct);<a name="line.379"></a>
+<FONT color="green">380</FONT>            }<a name="line.380"></a>
+<FONT color="green">381</FONT>            <a name="line.381"></a>
+<FONT color="green">382</FONT>            /** <a name="line.382"></a>
+<FONT color="green">383</FONT>             * Register a new encoder for the given content type.  If any encoder <a name="line.383"></a>
+<FONT color="green">384</FONT>             * previously existed for that content type it will be replaced.  The <a name="line.384"></a>
+<FONT color="green">385</FONT>             * closure must return an {@link HttpEntity}.  It will also usually <a name="line.385"></a>
+<FONT color="green">386</FONT>             * accept a single argument, which will be whatever is set in the request<a name="line.386"></a>
+<FONT color="green">387</FONT>             * configuration closure via {@link RequestConfigDelegate#setBody(Object)}.<a name="line.387"></a>
+<FONT color="green">388</FONT>             * @param contentType<a name="line.388"></a>
+<FONT color="green">389</FONT>             * @param closure<a name="line.389"></a>
+<FONT color="green">390</FONT>             */<a name="line.390"></a>
+<FONT color="green">391</FONT>            public void putAt( Object contentType, Closure value ) {<a name="line.391"></a>
+<FONT color="green">392</FONT>                    if ( contentType instanceof ContentType ) {<a name="line.392"></a>
+<FONT color="green">393</FONT>                            for ( String ct : ((ContentType)contentType).getContentTypeStrings() )<a name="line.393"></a>
+<FONT color="green">394</FONT>                                    this.registeredEncoders.put( ct, value );<a name="line.394"></a>
+<FONT color="green">395</FONT>                    }<a name="line.395"></a>
+<FONT color="green">396</FONT>                    else this.registeredEncoders.put( contentType.toString(), value );<a name="line.396"></a>
+<FONT color="green">397</FONT>            }<a name="line.397"></a>
+<FONT color="green">398</FONT>            <a name="line.398"></a>
+<FONT color="green">399</FONT>            /**<a name="line.399"></a>
+<FONT color="green">400</FONT>             * Alias for {@link #getAt(Object)} to allow property-style access.<a name="line.400"></a>
+<FONT color="green">401</FONT>             * @param key<a name="line.401"></a>
+<FONT color="green">402</FONT>             * @return<a name="line.402"></a>
+<FONT color="green">403</FONT>             */<a name="line.403"></a>
+<FONT color="green">404</FONT>            public Closure propertyMissing( Object key ) {<a name="line.404"></a>
+<FONT color="green">405</FONT>                    return this.getAt( key );<a name="line.405"></a>
+<FONT color="green">406</FONT>            }<a name="line.406"></a>
+<FONT color="green">407</FONT>            <a name="line.407"></a>
+<FONT color="green">408</FONT>            /**<a name="line.408"></a>
+<FONT color="green">409</FONT>             * Alias for {@link #putAt(Object, Closure)} to allow property-style access.<a name="line.409"></a>
+<FONT color="green">410</FONT>             * @param key<a name="line.410"></a>
+<FONT color="green">411</FONT>             * @param value<a name="line.411"></a>
+<FONT color="green">412</FONT>             */<a name="line.412"></a>
+<FONT color="green">413</FONT>            public void propertyMissing( Object key, Closure value ) {<a name="line.413"></a>
+<FONT color="green">414</FONT>                    this.putAt( key, value );<a name="line.414"></a>
+<FONT color="green">415</FONT>            }<a name="line.415"></a>
+<FONT color="green">416</FONT>            <a name="line.416"></a>
+<FONT color="green">417</FONT>            /**<a name="line.417"></a>
+<FONT color="green">418</FONT>             * Iterate over the entire parser map<a name="line.418"></a>
+<FONT color="green">419</FONT>             * @return<a name="line.419"></a>
+<FONT color="green">420</FONT>             */<a name="line.420"></a>
+<FONT color="green">421</FONT>            public Iterator&lt;Map.Entry&lt;String,Closure&gt;&gt; iterator() { <a name="line.421"></a>
+<FONT color="green">422</FONT>                    return this.registeredEncoders.entrySet().iterator(); <a name="line.422"></a>
+<FONT color="green">423</FONT>            }<a name="line.423"></a>
+<FONT color="green">424</FONT>    }<a name="line.424"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

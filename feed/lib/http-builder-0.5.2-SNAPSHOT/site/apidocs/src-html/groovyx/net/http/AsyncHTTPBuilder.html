@@ -1,0 +1,326 @@
+<HTML>
+<BODY BGCOLOR="white">
+<PRE>
+<FONT color="green">001</FONT>    /*<a name="line.1"></a>
+<FONT color="green">002</FONT>     * Copyright 2008-2011 Thomas Nichols.  http://blog.thomnichols.org<a name="line.2"></a>
+<FONT color="green">003</FONT>     *<a name="line.3"></a>
+<FONT color="green">004</FONT>     * Licensed under the Apache License, Version 2.0 (the "License");<a name="line.4"></a>
+<FONT color="green">005</FONT>     * you may not use this file except in compliance with the License.<a name="line.5"></a>
+<FONT color="green">006</FONT>     * You may obtain a copy of the License at<a name="line.6"></a>
+<FONT color="green">007</FONT>     *<a name="line.7"></a>
+<FONT color="green">008</FONT>     *     http://www.apache.org/licenses/LICENSE-2.0<a name="line.8"></a>
+<FONT color="green">009</FONT>     *<a name="line.9"></a>
+<FONT color="green">010</FONT>     * Unless required by applicable law or agreed to in writing, software<a name="line.10"></a>
+<FONT color="green">011</FONT>     * distributed under the License is distributed on an "AS IS" BASIS,<a name="line.11"></a>
+<FONT color="green">012</FONT>     * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.<a name="line.12"></a>
+<FONT color="green">013</FONT>     * See the License for the specific language governing permissions and<a name="line.13"></a>
+<FONT color="green">014</FONT>     * limitations under the License.<a name="line.14"></a>
+<FONT color="green">015</FONT>     *<a name="line.15"></a>
+<FONT color="green">016</FONT>     * You are receiving this code free of charge, which represents many hours of<a name="line.16"></a>
+<FONT color="green">017</FONT>     * effort from other individuals and corporations.  As a responsible member <a name="line.17"></a>
+<FONT color="green">018</FONT>     * of the community, you are encouraged (but not required) to donate any <a name="line.18"></a>
+<FONT color="green">019</FONT>     * enhancements or improvements back to the community under a similar open <a name="line.19"></a>
+<FONT color="green">020</FONT>     * source license.  Thank you. -TMN<a name="line.20"></a>
+<FONT color="green">021</FONT>     */<a name="line.21"></a>
+<FONT color="green">022</FONT>    package groovyx.net.http;<a name="line.22"></a>
+<FONT color="green">023</FONT>    <a name="line.23"></a>
+<FONT color="green">024</FONT>    import java.io.IOException;<a name="line.24"></a>
+<FONT color="green">025</FONT>    import java.net.URISyntaxException;<a name="line.25"></a>
+<FONT color="green">026</FONT>    import java.util.Map;<a name="line.26"></a>
+<FONT color="green">027</FONT>    import java.util.concurrent.Callable;<a name="line.27"></a>
+<FONT color="green">028</FONT>    import java.util.concurrent.ExecutionException;<a name="line.28"></a>
+<FONT color="green">029</FONT>    import java.util.concurrent.ExecutorService;<a name="line.29"></a>
+<FONT color="green">030</FONT>    import java.util.concurrent.Future;<a name="line.30"></a>
+<FONT color="green">031</FONT>    import java.util.concurrent.LinkedBlockingQueue;<a name="line.31"></a>
+<FONT color="green">032</FONT>    import java.util.concurrent.ThreadPoolExecutor;<a name="line.32"></a>
+<FONT color="green">033</FONT>    import java.util.concurrent.TimeUnit;<a name="line.33"></a>
+<FONT color="green">034</FONT>    <a name="line.34"></a>
+<FONT color="green">035</FONT>    import org.apache.http.HttpVersion;<a name="line.35"></a>
+<FONT color="green">036</FONT>    import org.apache.http.conn.ClientConnectionManager;<a name="line.36"></a>
+<FONT color="green">037</FONT>    import org.apache.http.conn.params.ConnManagerParams;<a name="line.37"></a>
+<FONT color="green">038</FONT>    import org.apache.http.conn.params.ConnPerRouteBean;<a name="line.38"></a>
+<FONT color="green">039</FONT>    import org.apache.http.conn.scheme.PlainSocketFactory;<a name="line.39"></a>
+<FONT color="green">040</FONT>    import org.apache.http.conn.scheme.Scheme;<a name="line.40"></a>
+<FONT color="green">041</FONT>    import org.apache.http.conn.scheme.SchemeRegistry;<a name="line.41"></a>
+<FONT color="green">042</FONT>    import org.apache.http.conn.ssl.SSLSocketFactory;<a name="line.42"></a>
+<FONT color="green">043</FONT>    import org.apache.http.impl.client.DefaultHttpClient;<a name="line.43"></a>
+<FONT color="green">044</FONT>    import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;<a name="line.44"></a>
+<FONT color="green">045</FONT>    import org.apache.http.params.BasicHttpParams;<a name="line.45"></a>
+<FONT color="green">046</FONT>    import org.apache.http.params.HttpConnectionParams;<a name="line.46"></a>
+<FONT color="green">047</FONT>    import org.apache.http.params.HttpParams;<a name="line.47"></a>
+<FONT color="green">048</FONT>    import org.apache.http.params.HttpProtocolParams;<a name="line.48"></a>
+<FONT color="green">049</FONT>    <a name="line.49"></a>
+<FONT color="green">050</FONT>    /**<a name="line.50"></a>
+<FONT color="green">051</FONT>     * This implementation makes all requests asynchronous by submitting jobs to a <a name="line.51"></a>
+<FONT color="green">052</FONT>     * {@link ThreadPoolExecutor}.  All request methods (including &lt;code&gt;get&lt;/code&gt; <a name="line.52"></a>
+<FONT color="green">053</FONT>     * and &lt;code&gt;post&lt;/code&gt;) return a {@link Future} instance, whose <a name="line.53"></a>
+<FONT color="green">054</FONT>     * {@link Future#get() get} method will provide access to whatever value was <a name="line.54"></a>
+<FONT color="green">055</FONT>     * returned from the response handler closure.<a name="line.55"></a>
+<FONT color="green">056</FONT>     *  <a name="line.56"></a>
+<FONT color="green">057</FONT>     * @author &lt;a href='mailto:tomstrummer+httpbuilder@gmail.com'&gt;Tom Nichols&lt;/a&gt;<a name="line.57"></a>
+<FONT color="green">058</FONT>     */<a name="line.58"></a>
+<FONT color="green">059</FONT>    public class AsyncHTTPBuilder extends HTTPBuilder {<a name="line.59"></a>
+<FONT color="green">060</FONT>    <a name="line.60"></a>
+<FONT color="green">061</FONT>            /**<a name="line.61"></a>
+<FONT color="green">062</FONT>             * Default pool size is one is not supplied in the constructor.<a name="line.62"></a>
+<FONT color="green">063</FONT>             */<a name="line.63"></a>
+<FONT color="green">064</FONT>            public static final int DEFAULT_POOL_SIZE = 4;<a name="line.64"></a>
+<FONT color="green">065</FONT>            <a name="line.65"></a>
+<FONT color="green">066</FONT>            protected ExecutorService threadPool;<a name="line.66"></a>
+<FONT color="green">067</FONT>    //              = (ThreadPoolExecutor)Executors.newCachedThreadPool();<a name="line.67"></a>
+<FONT color="green">068</FONT>            <a name="line.68"></a>
+<FONT color="green">069</FONT>            /**<a name="line.69"></a>
+<FONT color="green">070</FONT>             * Accepts the following named parameters:<a name="line.70"></a>
+<FONT color="green">071</FONT>             * &lt;dl&gt;<a name="line.71"></a>
+<FONT color="green">072</FONT>             *  &lt;dt&gt;threadPool&lt;/dt&gt;&lt;dd&gt;Custom {@link ExecutorService} instance for <a name="line.72"></a>
+<FONT color="green">073</FONT>             *      running submitted requests.  If this is an instance of {@link ThreadPoolExecutor},<a name="line.73"></a>
+<FONT color="green">074</FONT>             *      the poolSize will be determined by {@link ThreadPoolExecutor#getMaximumPoolSize()}.<a name="line.74"></a>
+<FONT color="green">075</FONT>             *      The default threadPool uses an unbounded queue to accept an unlimited <a name="line.75"></a>
+<FONT color="green">076</FONT>             *      number of requests.&lt;/dd&gt;<a name="line.76"></a>
+<FONT color="green">077</FONT>             *  &lt;dt&gt;poolSize&lt;/dt&gt;&lt;dd&gt;Max number of concurrent requests&lt;/dd&gt;<a name="line.77"></a>
+<FONT color="green">078</FONT>             *  &lt;dt&gt;uri&lt;/dt&gt;&lt;dd&gt;Default request URI&lt;/dd&gt;<a name="line.78"></a>
+<FONT color="green">079</FONT>             *  &lt;dt&gt;contentType&lt;/dt&gt;&lt;dd&gt;Default content type for requests and responses&lt;/dd&gt;<a name="line.79"></a>
+<FONT color="green">080</FONT>             *  &lt;dt&gt;timeout&lt;/dt&gt;&lt;dd&gt;Timeout in milliseconds to wait for a connection to <a name="line.80"></a>
+<FONT color="green">081</FONT>             *      be established and request to complete.&lt;/dd&gt;<a name="line.81"></a>
+<FONT color="green">082</FONT>             * &lt;/dl&gt;<a name="line.82"></a>
+<FONT color="green">083</FONT>             */<a name="line.83"></a>
+<FONT color="green">084</FONT>            public AsyncHTTPBuilder( Map&lt;String, ?&gt; args ) throws URISyntaxException {<a name="line.84"></a>
+<FONT color="green">085</FONT>                    super();<a name="line.85"></a>
+<FONT color="green">086</FONT>                    int poolSize = DEFAULT_POOL_SIZE;<a name="line.86"></a>
+<FONT color="green">087</FONT>                    ExecutorService threadPool = null;<a name="line.87"></a>
+<FONT color="green">088</FONT>                    if ( args != null ) { <a name="line.88"></a>
+<FONT color="green">089</FONT>                            threadPool = (ExecutorService)args.remove( "threadPool" );<a name="line.89"></a>
+<FONT color="green">090</FONT>    <a name="line.90"></a>
+<FONT color="green">091</FONT>                            if ( threadPool instanceof ThreadPoolExecutor )<a name="line.91"></a>
+<FONT color="green">092</FONT>                                    poolSize = ((ThreadPoolExecutor)threadPool).getMaximumPoolSize();<a name="line.92"></a>
+<FONT color="green">093</FONT>                            <a name="line.93"></a>
+<FONT color="green">094</FONT>                            Object poolSzArg = args.remove("poolSize");<a name="line.94"></a>
+<FONT color="green">095</FONT>                            if ( poolSzArg != null ) poolSize = Integer.parseInt( poolSzArg.toString() );<a name="line.95"></a>
+<FONT color="green">096</FONT>                            <a name="line.96"></a>
+<FONT color="green">097</FONT>                            if ( args.containsKey( "url" ) ) throw new IllegalArgumentException(<a name="line.97"></a>
+<FONT color="green">098</FONT>                                    "The 'url' parameter is deprecated; use 'uri' instead" );<a name="line.98"></a>
+<FONT color="green">099</FONT>                            Object defaultURI = args.remove("uri");<a name="line.99"></a>
+<FONT color="green">100</FONT>                            if ( defaultURI != null ) super.setUri(defaultURI);<a name="line.100"></a>
+<FONT color="green">101</FONT>                                    <a name="line.101"></a>
+<FONT color="green">102</FONT>                            Object defaultContentType = args.remove("contentType");<a name="line.102"></a>
+<FONT color="green">103</FONT>                            if ( defaultContentType != null ) <a name="line.103"></a>
+<FONT color="green">104</FONT>                                    super.setContentType(defaultContentType);<a name="line.104"></a>
+<FONT color="green">105</FONT>                            <a name="line.105"></a>
+<FONT color="green">106</FONT>                            Object timeout = args.remove( "timeout" );<a name="line.106"></a>
+<FONT color="green">107</FONT>                            if ( timeout != null ) setTimeout( (Integer) timeout );<a name="line.107"></a>
+<FONT color="green">108</FONT>    <a name="line.108"></a>
+<FONT color="green">109</FONT>                            if ( args.size() &gt; 0 ) {<a name="line.109"></a>
+<FONT color="green">110</FONT>                                    String invalidArgs = "";<a name="line.110"></a>
+<FONT color="green">111</FONT>                                    for ( String k : args.keySet() ) invalidArgs += k + ",";<a name="line.111"></a>
+<FONT color="green">112</FONT>                                    throw new IllegalArgumentException("Unexpected keyword args: " + invalidArgs);<a name="line.112"></a>
+<FONT color="green">113</FONT>                            }<a name="line.113"></a>
+<FONT color="green">114</FONT>                    }<a name="line.114"></a>
+<FONT color="green">115</FONT>                    this.initThreadPools( poolSize, threadPool );<a name="line.115"></a>
+<FONT color="green">116</FONT>            }<a name="line.116"></a>
+<FONT color="green">117</FONT>            <a name="line.117"></a>
+<FONT color="green">118</FONT>            /**<a name="line.118"></a>
+<FONT color="green">119</FONT>             * Submits a {@link Callable} instance to the job pool, which in turn will <a name="line.119"></a>
+<FONT color="green">120</FONT>             * call {@link HTTPBuilder#doRequest(RequestConfigDelegate)} in an asynchronous <a name="line.120"></a>
+<FONT color="green">121</FONT>             * thread.  The {@link Future} instance returned by this value (which in <a name="line.121"></a>
+<FONT color="green">122</FONT>             * turn should be returned by any of the public &lt;code&gt;request&lt;/code&gt; methods<a name="line.122"></a>
+<FONT color="green">123</FONT>             * (including &lt;code&gt;get&lt;/code&gt; and &lt;code&gt;post&lt;/code&gt;) may be used to <a name="line.123"></a>
+<FONT color="green">124</FONT>             * retrieve whatever value may be returned from the executed response <a name="line.124"></a>
+<FONT color="green">125</FONT>             * handler closure. <a name="line.125"></a>
+<FONT color="green">126</FONT>             */<a name="line.126"></a>
+<FONT color="green">127</FONT>            @Override<a name="line.127"></a>
+<FONT color="green">128</FONT>            protected Future&lt;?&gt; doRequest( final RequestConfigDelegate delegate ) {<a name="line.128"></a>
+<FONT color="green">129</FONT>                    return threadPool.submit( new Callable&lt;Object&gt;() {<a name="line.129"></a>
+<FONT color="green">130</FONT>                            /*@Override*/ public Object call() throws Exception {<a name="line.130"></a>
+<FONT color="green">131</FONT>                                    try {<a name="line.131"></a>
+<FONT color="green">132</FONT>                                            return doRequestSuper(delegate);<a name="line.132"></a>
+<FONT color="green">133</FONT>                                    }<a name="line.133"></a>
+<FONT color="green">134</FONT>                                    catch( Exception ex ) {<a name="line.134"></a>
+<FONT color="green">135</FONT>                                            log.info( "Exception thrown from response delegate: " + delegate, ex );<a name="line.135"></a>
+<FONT color="green">136</FONT>                                            throw ex;<a name="line.136"></a>
+<FONT color="green">137</FONT>                                    }<a name="line.137"></a>
+<FONT color="green">138</FONT>                            }<a name="line.138"></a>
+<FONT color="green">139</FONT>                    });<a name="line.139"></a>
+<FONT color="green">140</FONT>            }<a name="line.140"></a>
+<FONT color="green">141</FONT>            <a name="line.141"></a>
+<FONT color="green">142</FONT>            /*<a name="line.142"></a>
+<FONT color="green">143</FONT>             * Because we can't call "super.doRequest" from within the anonymous <a name="line.143"></a>
+<FONT color="green">144</FONT>             * Callable subclass.<a name="line.144"></a>
+<FONT color="green">145</FONT>             */<a name="line.145"></a>
+<FONT color="green">146</FONT>            private Object doRequestSuper( RequestConfigDelegate delegate ) throws IOException {<a name="line.146"></a>
+<FONT color="green">147</FONT>                    return super.doRequest(delegate);<a name="line.147"></a>
+<FONT color="green">148</FONT>            }<a name="line.148"></a>
+<FONT color="green">149</FONT>            <a name="line.149"></a>
+<FONT color="green">150</FONT>            /**<a name="line.150"></a>
+<FONT color="green">151</FONT>             * Initializes threading parameters for the HTTPClient's <a name="line.151"></a>
+<FONT color="green">152</FONT>             * {@link ThreadSafeClientConnManager}, and this class' ThreadPoolExecutor. <a name="line.152"></a>
+<FONT color="green">153</FONT>             */<a name="line.153"></a>
+<FONT color="green">154</FONT>            protected void initThreadPools( final int poolSize, final ExecutorService threadPool ) {<a name="line.154"></a>
+<FONT color="green">155</FONT>                    if (poolSize &lt; 1) throw new IllegalArgumentException("poolSize may not be &lt; 1");<a name="line.155"></a>
+<FONT color="green">156</FONT>                    // Create and initialize HTTP parameters<a name="line.156"></a>
+<FONT color="green">157</FONT>                    HttpParams params = client != null ? client.getParams()<a name="line.157"></a>
+<FONT color="green">158</FONT>                                    : new BasicHttpParams();<a name="line.158"></a>
+<FONT color="green">159</FONT>                    ConnManagerParams.setMaxTotalConnections(params, poolSize);<a name="line.159"></a>
+<FONT color="green">160</FONT>                    ConnManagerParams.setMaxConnectionsPerRoute(params,<a name="line.160"></a>
+<FONT color="green">161</FONT>                                    new ConnPerRouteBean(poolSize));<a name="line.161"></a>
+<FONT color="green">162</FONT>    <a name="line.162"></a>
+<FONT color="green">163</FONT>                    HttpProtocolParams.setVersion(params, HttpVersion.HTTP_1_1);<a name="line.163"></a>
+<FONT color="green">164</FONT>    <a name="line.164"></a>
+<FONT color="green">165</FONT>                    // Create and initialize scheme registry<a name="line.165"></a>
+<FONT color="green">166</FONT>                    SchemeRegistry schemeRegistry = new SchemeRegistry();<a name="line.166"></a>
+<FONT color="green">167</FONT>                    schemeRegistry.register( new Scheme( "http", <a name="line.167"></a>
+<FONT color="green">168</FONT>                                    PlainSocketFactory.getSocketFactory(), 80 ) );<a name="line.168"></a>
+<FONT color="green">169</FONT>                    schemeRegistry.register( new Scheme( "https", <a name="line.169"></a>
+<FONT color="green">170</FONT>                                    SSLSocketFactory.getSocketFactory(), 443));<a name="line.170"></a>
+<FONT color="green">171</FONT>    <a name="line.171"></a>
+<FONT color="green">172</FONT>                    ClientConnectionManager cm = new ThreadSafeClientConnManager(<a name="line.172"></a>
+<FONT color="green">173</FONT>                                    params, schemeRegistry );<a name="line.173"></a>
+<FONT color="green">174</FONT>                    super.client = new DefaultHttpClient( cm, params );<a name="line.174"></a>
+<FONT color="green">175</FONT>    <a name="line.175"></a>
+<FONT color="green">176</FONT>                    this.threadPool = threadPool != null ? threadPool :<a name="line.176"></a>
+<FONT color="green">177</FONT>                            new ThreadPoolExecutor( poolSize, poolSize, 120, TimeUnit.SECONDS, <a name="line.177"></a>
+<FONT color="green">178</FONT>                                            new LinkedBlockingQueue&lt;Runnable&gt;() );<a name="line.178"></a>
+<FONT color="green">179</FONT>            }<a name="line.179"></a>
+<FONT color="green">180</FONT>            <a name="line.180"></a>
+<FONT color="green">181</FONT>            /**<a name="line.181"></a>
+<FONT color="green">182</FONT>             * {@inheritDoc}<a name="line.182"></a>
+<FONT color="green">183</FONT>             */<a name="line.183"></a>
+<FONT color="green">184</FONT>            @Override<a name="line.184"></a>
+<FONT color="green">185</FONT>            protected Object defaultSuccessHandler( HttpResponseDecorator resp, Object parsedData )<a name="line.185"></a>
+<FONT color="green">186</FONT>                            throws ResponseParseException {<a name="line.186"></a>
+<FONT color="green">187</FONT>                    return super.defaultSuccessHandler( resp, parsedData );<a name="line.187"></a>
+<FONT color="green">188</FONT>            }<a name="line.188"></a>
+<FONT color="green">189</FONT>            <a name="line.189"></a>
+<FONT color="green">190</FONT>            /**<a name="line.190"></a>
+<FONT color="green">191</FONT>             * For 'failure' responses (e.g. a 404), the exception will be wrapped in <a name="line.191"></a>
+<FONT color="green">192</FONT>             * a {@link ExecutionException} and held by the {@link Future} instance.  <a name="line.192"></a>
+<FONT color="green">193</FONT>             * The exception is then re-thrown when calling {@link Future#get() <a name="line.193"></a>
+<FONT color="green">194</FONT>             * future.get()}.  You can access the original exception (e.g. an <a name="line.194"></a>
+<FONT color="green">195</FONT>             * {@link HttpResponseException}) by calling &lt;code&gt;ex.getCause()&lt;/code&gt;.  <a name="line.195"></a>
+<FONT color="green">196</FONT>             * <a name="line.196"></a>
+<FONT color="green">197</FONT>             */<a name="line.197"></a>
+<FONT color="green">198</FONT>            @Override<a name="line.198"></a>
+<FONT color="green">199</FONT>            protected void defaultFailureHandler( HttpResponseDecorator resp )<a name="line.199"></a>
+<FONT color="green">200</FONT>                            throws HttpResponseException {<a name="line.200"></a>
+<FONT color="green">201</FONT>                    super.defaultFailureHandler( resp );<a name="line.201"></a>
+<FONT color="green">202</FONT>            }<a name="line.202"></a>
+<FONT color="green">203</FONT>            <a name="line.203"></a>
+<FONT color="green">204</FONT>            /**<a name="line.204"></a>
+<FONT color="green">205</FONT>             * This timeout is used for both the time to wait for an established <a name="line.205"></a>
+<FONT color="green">206</FONT>             * connection, and the time to wait for data.<a name="line.206"></a>
+<FONT color="green">207</FONT>             * @see HttpConnectionParams#setSoTimeout(HttpParams, int)<a name="line.207"></a>
+<FONT color="green">208</FONT>             * @see HttpConnectionParams#setConnectionTimeout(HttpParams, int)<a name="line.208"></a>
+<FONT color="green">209</FONT>             * @param timeout time to wait in milliseconds.<a name="line.209"></a>
+<FONT color="green">210</FONT>             */<a name="line.210"></a>
+<FONT color="green">211</FONT>            public void setTimeout( int timeout ) {<a name="line.211"></a>
+<FONT color="green">212</FONT>                    HttpConnectionParams.setConnectionTimeout( super.getClient().getParams(), timeout );<a name="line.212"></a>
+<FONT color="green">213</FONT>                    HttpConnectionParams.setSoTimeout( super.getClient().getParams(), timeout );<a name="line.213"></a>
+<FONT color="green">214</FONT>                    /* this will cause a thread waiting for an available connection instance<a name="line.214"></a>
+<FONT color="green">215</FONT>                     * to time-out   */<a name="line.215"></a>
+<FONT color="green">216</FONT>    //              ConnManagerParams.setTimeout( super.getClient().getParams(), timeout );         <a name="line.216"></a>
+<FONT color="green">217</FONT>            }<a name="line.217"></a>
+<FONT color="green">218</FONT>            <a name="line.218"></a>
+<FONT color="green">219</FONT>            /**<a name="line.219"></a>
+<FONT color="green">220</FONT>             * Get the timeout in for establishing an HTTP connection.<a name="line.220"></a>
+<FONT color="green">221</FONT>             * @return timeout in milliseconds.<a name="line.221"></a>
+<FONT color="green">222</FONT>             */<a name="line.222"></a>
+<FONT color="green">223</FONT>            public int getTimeout() {<a name="line.223"></a>
+<FONT color="green">224</FONT>                    return HttpConnectionParams.getConnectionTimeout( super.getClient().getParams() );<a name="line.224"></a>
+<FONT color="green">225</FONT>            }<a name="line.225"></a>
+<FONT color="green">226</FONT>            <a name="line.226"></a>
+<FONT color="green">227</FONT>            /**<a name="line.227"></a>
+<FONT color="green">228</FONT>             * &lt;p&gt;Access the underlying threadpool to adjust things like job timeouts.&lt;/p&gt;  <a name="line.228"></a>
+<FONT color="green">229</FONT>             * <a name="line.229"></a>
+<FONT color="green">230</FONT>             * &lt;p&gt;Note that this is not the same pool used by the HttpClient's <a name="line.230"></a>
+<FONT color="green">231</FONT>             * {@link ThreadSafeClientConnManager}.  Therefore, increasing the <a name="line.231"></a>
+<FONT color="green">232</FONT>             * {@link ThreadPoolExecutor#setMaximumPoolSize(int) maximum pool size} will<a name="line.232"></a>
+<FONT color="green">233</FONT>             * not in turn increase the number of possible concurrent requests.  It will<a name="line.233"></a>
+<FONT color="green">234</FONT>             * simply cause more requests to be &lt;i&gt;attempted&lt;/i&gt; which will then simply<a name="line.234"></a>
+<FONT color="green">235</FONT>             * block while waiting for a free connection.&lt;/p&gt;<a name="line.235"></a>
+<FONT color="green">236</FONT>             * <a name="line.236"></a>
+<FONT color="green">237</FONT>             * @return the service used to execute requests.  By default this is a <a name="line.237"></a>
+<FONT color="green">238</FONT>             * {@link ThreadPoolExecutor}.<a name="line.238"></a>
+<FONT color="green">239</FONT>             */<a name="line.239"></a>
+<FONT color="green">240</FONT>            public ExecutorService getThreadExecutor() {<a name="line.240"></a>
+<FONT color="green">241</FONT>                    return this.threadPool;<a name="line.241"></a>
+<FONT color="green">242</FONT>            }<a name="line.242"></a>
+<FONT color="green">243</FONT>            <a name="line.243"></a>
+<FONT color="green">244</FONT>            /**<a name="line.244"></a>
+<FONT color="green">245</FONT>             * {@inheritDoc}<a name="line.245"></a>
+<FONT color="green">246</FONT>             */<a name="line.246"></a>
+<FONT color="green">247</FONT>            @Override public void shutdown() {<a name="line.247"></a>
+<FONT color="green">248</FONT>                    super.shutdown(); <a name="line.248"></a>
+<FONT color="green">249</FONT>                    this.threadPool.shutdown();<a name="line.249"></a>
+<FONT color="green">250</FONT>            }<a name="line.250"></a>
+<FONT color="green">251</FONT>            <a name="line.251"></a>
+<FONT color="green">252</FONT>            /**<a name="line.252"></a>
+<FONT color="green">253</FONT>             * {@inheritDoc}<a name="line.253"></a>
+<FONT color="green">254</FONT>             * @see #shutdown()<a name="line.254"></a>
+<FONT color="green">255</FONT>             */<a name="line.255"></a>
+<FONT color="green">256</FONT>            @Override protected void finalize() throws Throwable {<a name="line.256"></a>
+<FONT color="green">257</FONT>                    this.shutdown();<a name="line.257"></a>
+<FONT color="green">258</FONT>                    super.finalize();<a name="line.258"></a>
+<FONT color="green">259</FONT>            }<a name="line.259"></a>
+<FONT color="green">260</FONT>    }<a name="line.260"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>
