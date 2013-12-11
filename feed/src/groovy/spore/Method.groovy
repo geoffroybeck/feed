@@ -49,6 +49,11 @@ class Method {
 	def contentTypesNormalizer={
 		
 	}
+	/**For the moment it's not quite apparent,
+	 * but this spot is the most important part
+	 * of the workflow. It's a property of the class
+	 * and it's value is a closure. 
+	 */
 	def request={reqParams->
 
 		def ret = ""
