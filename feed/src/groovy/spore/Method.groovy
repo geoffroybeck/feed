@@ -13,6 +13,7 @@ import errors.MethodCallError
 class Method {
 
 	HTTPBuilder builder = new HTTPBuilder();
+	
 	@Mandatory
 	def name
 	@Mandatory
@@ -88,7 +89,6 @@ class Method {
 					/*resp.properties.each(){k,v->
 						println k
 						println v
-						
 					}*/
 					String statusCode=String?.valueOf(resp.statusLine.statusCode)
 					ret+=reader
@@ -100,7 +100,7 @@ class Method {
 				 println "Query response: "+json
 				 println resp.responseData
 				 //  json.responseData.results.each {
-				 //	println "  ${it.titleNoFormatting} : ${it.visibleUrl}"
+				 //		println "  ${it.titleNoFormatting} : ${it.visibleUrl}"
 				 // }
 				 }*/
 				response.failure ={resp->

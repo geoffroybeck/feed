@@ -56,7 +56,6 @@ class Spore {
 		 * */
 		args?."methods".each(){k,v->
 			try{
-				println "SERIEUX"+ (![null, ""].contains(v['base_url'])?v['base_url']:base_url)
 				methods+=k
 				def m = createMethod([
 					name:k,
@@ -138,12 +137,14 @@ class Spore {
 	def addDefault(param,value){
 		//defaults[params]
 	}
+	
 	def removeDefault(){
 
 	}
 	def enable(){
 
 	}
+	
 	def enableIf(Closure clos,predicate,middleware){
 
 	}
