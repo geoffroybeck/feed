@@ -8,6 +8,7 @@ import static groovyx.net.http.Method.PUT
 import static groovyx.net.http.ContentType.JSON
 import static groovyx.net.http.ContentType.TEXT
 import static groovyx.net.http.ContentType.ANY
+import errors.MethodCallError
 
 class Method {
 
@@ -60,7 +61,7 @@ class Method {
 		def requiredParamsMissing=[]
 		def whateverElseMissing=[]
 		def errors=[]
-		println "name : $name required_params : $required_params effective params on call : ${reqParams?reqParams:''}"
+		println "name : $name, required_params : ${required_params?:'none'}, effective params on call : ${reqParams?reqParams:''}"
 		required_params.each{
 			if (!reqParams.find({k,v->k==it})){
 				requiredParamsMissing+=it
@@ -73,31 +74,26 @@ class Method {
 			!it.empty?errors+=it:''
 		}
 		if (errors.size()==0){
-			//base_url,method,headers.Accept
-			builder.request('http://localhost:8080',method?.toUpperCase()?:GET,ANY) {
-				
-				uri.path = '/feed/feed/someOtherAction'
+			/**base_url,method,headers.Accept*/
+			builder.request(base_url,method?.toUpperCase()?:GET,ANY) {
+				uri.path = path
 				println request.URI
-				uri.properties.each (){k,v->
-					println "k : "+k
-					println "v : "+v
-				}
 				println uri.toString()
-				//uri.query = [ v:'1.0', q: 'Calvin and Hobbes' ]
+				uri.query = reqParams
 				headers.'User-Agent' = 'Mozilla/5.0'
 				//header.'Content-Type'
 				//headers.'Accept'=formats
-				//'http://localhost:8080/feed'
-				uri.query = [v:'1.0',q : "${reqParams['q']?:'Whatever'}"]
-				
-				// bon ici il te faut un test sur le contentType
+				//TODO bon ici il te faut un test sur le contentType
 				response.success = { resp, reader ->
-					assert resp.statusLine.statusCode == 200
-					//println resp.statusLine
+					/*resp.properties.each(){k,v->
+						println k
+						println v
+						
+					}*/
+					String statusCode=String?.valueOf(resp.statusLine.statusCode)
 					ret+=reader
-					//println reader  // print response stream
+					ret+=statusCode
 				}
-				
 				/*c'est pour si c'est du json
 				 response.success = { resp, json ->
 				 //  assert json.size() == 3
@@ -107,14 +103,18 @@ class Method {
 				 //	println "  ${it.titleNoFormatting} : ${it.visibleUrl}"
 				 // }
 				 }*/
-				response.failure ={
-						ret+="request failure"
+				response.failure ={resp->
+						String statusCode=String?.valueOf(resp.statusLine.statusCode)
+						ret+="request failure"+statusCode
 				}
 			}
 		}
 		if (!requiredParamsMissing.empty){
-			requiredParamsMissing.each{ ret += "$it is missing for $name" }
+			requiredParamsMissing.each{
+				 ret += "$it is missing for $name" 
+				 }
 		}
+		println ret
 		return ret
 	}
 }

@@ -1,5 +1,6 @@
 package spore
 
+import errors.MethodError
 import errors.SporeError
 
 class Spore {
@@ -37,7 +38,7 @@ class Spore {
 			//throw new SporeError()
 		}
 		/** Saturations of properties 
-		 * with matching parsed JSON keys' values.
+		 *  with matching parsed JSON keys' values.
 		 */
 		args?.each(){k,v->
 			if (this.properties.find({it.key==k && !['methods'].contains(k)})){
@@ -54,31 +55,38 @@ class Spore {
 		 * a parameter Map.
 		 * */
 		args?."methods".each(){k,v->
-			methods+=k
-			def m = createMethod([
-				name:k,
-				//Inherited from spore if not specified in the parsed Json
-				base_url:![null, ""].contains(v['base_url'])?v['base_url']:base_url,
-				path:v['path'],
-				required_params:v['required_params'],
-				optional_params:v['optional_params'],
-				expected_status:v['expected_status'],
-				required_payload:v['required_payload'],
-				description:v['description'],
-				authentication:v['authentication'],
-				formats:v['formats'],
-				documentation:v['documentation'],
-				defaults : v['defaults'],
-				//Inherited from Spore
-				middlewares:middlewares,
-				global_authentication:authentication,
-				global_formats:formats
-			])
-			/**Next is the spot where the Method
-			 *is dynamically added to the Spore 
-			 *If no Method could be created, nothing happens.
-			 **/
-			m?.class==spore.Method?this.metaClass[k]=m.request:""
+			try{
+				println "SERIEUX"+ (![null, ""].contains(v['base_url'])?v['base_url']:base_url)
+				methods+=k
+				def m = createMethod([
+					name:k,
+					//Inherited from spore if not specified in the parsed Json
+					base_url:![null, ""].contains(v['base_url'])?v['base_url']:base_url,
+					//Found in the Json [k]
+					path:v['path'],
+					required_params:v['required_params'],
+					optional_params:v['optional_params'],
+					expected_status:v['expected_status'],
+					required_payload:v['required_payload'],
+					description:v['description'],
+					authentication:v['authentication'],
+					formats:v['formats'],
+					documentation:v['documentation'],
+					defaults : v['defaults'],
+					//Inherited from Spore
+					middlewares:middlewares,
+					global_authentication:authentication,
+					global_formats:formats
+				])
+				/**Next is the spot where the Method
+				 *is dynamically added to the Spore 
+				 *If no Method could be created, nothing happens.
+				 **/
+				m?.class==spore.Method?this.metaClass[k]=m.request:""
+			}catch (MethodError me){
+				println me.getMessage()
+				println me.getCause()
+			}
 		}
 	}
 	/**@param parsedJson : the Json from which the Method should
@@ -86,31 +94,31 @@ class Spore {
 	 * @return either a Method either a String describing what prevented 
 	 * the method from being created.
 	 */
-	def createMethod(parsedJson){
+	def createMethod(parsedJson)throws MethodError{
 		def checkResult = methodIntegrityCheck(parsedJson)
 		if (checkResult==true){
 			return new Method(parsedJson)
 		}else{
+			String message = ""
+			checkResult.each(){k,v->
+				message+=(k+" : "+v)
+			}
+			throw new MethodError(message,new Throwable(message))
 			return checkResult
 		}
 	}
+	/**Checks if the Json data from which the Method is to be created
+	 * is sufficient, i.e if it contains the mandatory fields.
+	 * @param parsedJson
+	 * @return true, if the Json contains sufficient data for required fields, or 
+	 * a Map containing error messages registered under the concerned property name
+	 */
 	def methodIntegrityCheck(parsedJson){
 		Map methodBuildError=[:]
 
-		/*def allMandatoryFields = 
-		 * 
-		 spore.Method.properties.findAll { k,v ->
-		 spore.Method.declaredFields.find {
-		 Mandatory in it.declaredAnnotations*.annotationType()
-		 }
-		 }
-		 println "allMandatoryFields : $allMandatoryFields"*/
-
-		def mandatoryFields=parsedJson.findAll { k,v ->
-			spore.Method.declaredFields.find {
-				it.name == k && Mandatory in it.declaredAnnotations*.annotationType()
-			}
-		}.keySet()
+		def mandatoryFields=spore.Method.declaredFields.findAll {
+			Mandatory in it.declaredAnnotations*.annotationType()
+		}*.name
 
 		parsedJson.each{k,v->
 			if (mandatoryFields.contains(k) && (!v || v.empty || v=='' )){
@@ -128,7 +136,7 @@ class Spore {
 	}
 
 	def addDefault(param,value){
-	//defaults[params]
+		//defaults[params]
 	}
 	def removeDefault(){
 

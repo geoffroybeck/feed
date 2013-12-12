@@ -13,6 +13,7 @@
 	  		<div style="font-weight:bold;font-size:18px;">
 	  		${result.key}
 	  		</div> 
+	  		${result.value.class }
 	  		${(result.value.size()>40?result.value[0..39]:result.value)}
 	  	</li>
   	</g:each>

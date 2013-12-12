@@ -1,6 +1,6 @@
 package errors
 
-class SporeError extends Error{
+class SporeError extends Exception{
 static errorMessages=[
 	'name':'A name for this client is required',
 	'base_url':'A base URL to the REST Web Service is required',
