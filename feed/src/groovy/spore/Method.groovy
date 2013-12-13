@@ -8,18 +8,22 @@ import static groovyx.net.http.Method.PUT
 import static groovyx.net.http.ContentType.JSON
 import static groovyx.net.http.ContentType.TEXT
 import static groovyx.net.http.ContentType.ANY
+import errors.MethodCallError
 
 class Method {
 
 	HTTPBuilder builder = new HTTPBuilder();
+	
+	@Mandatory
 	def name
+	@Mandatory
 	def api_base_url
-	//mandatory
+	@Mandatory
 	String method
-	//mandatory
+	@Mandatory
 	def path
-	def required_params
-	def optional_params
+	def required_params=[]
+	def optional_params=[]
 	def expected_status
 	def required_payload
 	def description
@@ -32,36 +36,103 @@ class Method {
 	def global_formats
 	def defaults
 	
-	/*Method(args){
-	
-	}*/
-	
-	def request={reqParams->
-		println "I'm being called, keep cool, with this name : $name"
-		println "with this method : ${method?.toUpperCase()?:GET}"
-		println "with this format : ${formats?:global_formats?:ANY}"
-		println "and i'm being overloaded with those params ${reqParams?reqParams:''}"
-		builder.request('http://www.google.com/search',method?.toUpperCase()?:GET,ANY) {
-			//uri.path = ''
-			uri.query = [ v:'1.0', q: 'Calvin and Hobbes' ]
-			// bon ici il te faut un test sur le contentType
-			response.success = { resp, reader ->
-				assert resp.statusLine.statusCode == 200
-				println resp.statusLine
-				//println //reader // print response stream
-			}
-			/*�a c'est pour si c'est du json
-			response.success = { resp, json ->
-			//  assert json.size() == 3
-			  println "Query response: "+json
-			  println resp.responseData
-			//  json.responseData.results.each {
-			//	println "  ${it.titleNoFormatting} : ${it.visibleUrl}"
-			// }
-			}*/
-			response.failure ={
-				
+	//Explicit  constructor
+	Method(args){
+		
+		args?.each(){k,v->
+			//def prop= this.properties.find({it.key==k})
+			if (this.properties.find({it.key==k && ![
+					'nomdePorpPourLaquelleIlYaUnTraitementDifferent'
+				].contains(k)})){
+				this."$k"=v
 			}
 		}
+	}
+	def contentTypesNormalizer={
+		
+	}
+	/**For the moment it's not quite apparent,
+	 * but this spot is the most important part
+	 * of the workflow. It's a property of the class
+	 * and it's value is a closure. 
+	 */
+	def request={reqParams->
+
+		def ret = ""
+		def requiredParamsMissing=[]
+		def whateverElseMissing=[]
+		def errors=[]
+		println "name : $name, required_params : ${required_params?:'none'}, effective params on call : ${reqParams?reqParams:''}"
+		required_params.each{
+			if (!reqParams.find({k,v->k==it})){
+				requiredParamsMissing+=it
+			}
+		}
+		[
+			requiredParamsMissing,
+			whateverElseMissing
+		].each() {
+			!it.empty?errors+=it:''
+		}
+	
+		if (errors.size()==0){
+			/**base_url,method,headers.Accept*/
+			//Accept c'est une contrainte sur ce qu'on est disposés à recevoir dans la réponse
+			//si formats  c'est une spécification de ce qu'est ok de revoir le web service
+			//alors c'est contentType qui doit être généré en fonction de formats
+			builder.request(base_url,/*method?.toUpperCase()?:*/POST,ANY) {
+				uri.path = path
+				//println request.URI
+				//println uri.toString()
+				uri.query = reqParams
+				
+				headers.'User-Agent' = 'Satanux/5.0'
+				
+				headers.'Content-Type'=JSON
+				//request.setContentType()
+				
+				println "serieux" + request.method
+				println request.method.class
+				println request.method=="POST"
+				if (request.method=="POST"){
+					println "oui, ici"
+					send JSON, ["clef":["subclef":'valeur']]
+					request.entity.getContent()
+				}else{
+				
+				}
+				//headers.'Accept'=formats
+				//TODO bon ici il te faut un test sur le contentType
+				response.success = { resp, reader ->
+					/*resp.properties.each(){k,v->
+						println k
+						println v
+					}*/
+					String statusCode=String?.valueOf(resp.statusLine.statusCode)
+					ret+=reader
+					ret+=statusCode
+				}
+				/*c'est pour si c'est du json
+				 response.success = { resp, json ->
+				 //  assert json.size() == 3
+				 println "Query response: "+json
+				 println resp.responseData
+				 //  json.responseData.results.each {
+				 //		println "  ${it.titleNoFormatting} : ${it.visibleUrl}"
+				 // }
+				 }*/
+				response.failure ={resp->
+						String statusCode=String?.valueOf(resp.statusLine.statusCode)
+						ret+="request failure"+statusCode
+				}
+			}
+		}
+		if (!requiredParamsMissing.empty){
+			requiredParamsMissing.each{
+				 ret += "$it is missing for $name" 
+				 }
+		}
+		println ret
+		return ret
 	}
 }
