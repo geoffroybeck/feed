@@ -1,5 +1,5 @@
 {
-   "base_url" : "http://localhost:8080",
+   "base_url" : "api.ihackernews.com",
    "version" : "0.02",
    "methods" : {
       "askhn_posts" : {
@@ -9,15 +9,15 @@
          "expected_status" : [
             "200"
          ],
-         "path" : "/feed/IAmAWebService/ask/",
+         "path" : "/ask/:nextid",
          "method" : "GET"
       },
       "vote" : {
-         "path" : "/feed/IAmAWebService/vote",
+         "path" : "/vote",
          "method" : "POST"
       },
       "auth_token" : {
-         "path" : "/feed/IAmAWebService/login",
+         "path" : "/login",
          "method" : "POST"
       },
       "new_posts" : {
@@ -27,11 +27,11 @@
          "expected_status" : [
             "200"
          ],
-         "path" : "/feed/IAmAWebService/new/:nextid",
+         "path" : "/new/:nextid",
          "method" : "GET"
       },
       "comment" : {
-         "path" : "/feed/IAmAWebService/comment",
+         "path" : "/comment",
          "method" : "POST"
       },
       "user_profile" : {
@@ -41,7 +41,7 @@
          "expected_status" : [
             "200"
          ],
-         "path" : "/feed/IAmAWebService/profile/:userid",
+         "path" : "/profile/:userid",
          "method" : "GET"
       },
       "retrieve_page" : {
@@ -51,7 +51,7 @@
          "expected_status" : [
             "200"
          ],
-         "path" : "/feed/IAmAWebService/page/:nextid",
+         "path" : "/page/:nextid",
          "method" : "GET"
       },
       "posts_from_user" : {
@@ -64,7 +64,7 @@
          "expected_status" : [
             "200"
          ],
-         "path" : "/feed/IAmAWebService/by/:username/:nextid",
+         "path" : "/by/:username/:nextid",
          "method" : "GET"
       },
       "comments_for_post" : {
@@ -74,7 +74,7 @@
          "expected_status" : [
             "200"
          ],
-         "path" : "/feed/IAmAWebService/comments/:id",
+         "path" : "/comments/:id",
          "method" : "GET"
       }
    },
