@@ -13,7 +13,6 @@ class FeedController {
 		println "!"+spore.metaClass.methods*.name.sort().unique()
 		def i = 0
 		spore?.methods?.each (){
-			println "$it"
 			def test = spore."$it"([test:i,q:"RIGHT"])
 			i++
 			results+=["$it":test]

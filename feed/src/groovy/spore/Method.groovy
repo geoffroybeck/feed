@@ -8,12 +8,17 @@ import static groovyx.net.http.Method.PUT
 import static groovyx.net.http.ContentType.JSON
 import static groovyx.net.http.ContentType.TEXT
 import static groovyx.net.http.ContentType.ANY
+import static groovyx.net.http.ContentType.XML
+import static groovyx.net.http.ContentType.BINARY
+import static groovyx.net.http.ContentType.URLENC
+import static groovyx.net.http.ContentType.HTML
 import errors.MethodCallError
 
 class Method {
+	static contentTypes = ['JSON':JSON,'TEXT':TEXT,'XML':XML,"HTML":HTML,"URLENC":URLENC,"BINARY":BINARY,"JSON":JSON]
 
 	HTTPBuilder builder = new HTTPBuilder();
-	
+
 	@Mandatory
 	def name
 	@Mandatory
@@ -35,21 +40,24 @@ class Method {
 	def global_authentication
 	def global_formats
 	def defaults
-	
+
 	//Explicit  constructor
 	Method(args){
-		
+
 		args?.each(){k,v->
 			//def prop= this.properties.find({it.key==k})
-			if (this.properties.find({it.key==k && ![
+			if (this.properties.find({
+				it.key==k && ![
 					'nomdePorpPourLaquelleIlYaUnTraitementDifferent'
 				].contains(k)})){
 				this."$k"=v
 			}
 		}
 	}
-	def contentTypesNormalizer={
-		
+	def contentTypesNormalizer(){
+		String normalized
+		def format=formats?:global_formats
+		normalized=contentTypes[format.class==java.lang.String?format.toUpperCase():format[0].toUpperCase()]
 	}
 	/**For the moment it's not quite apparent,
 	 * but this spot is the most important part
@@ -74,65 +82,73 @@ class Method {
 		].each() {
 			!it.empty?errors+=it:''
 		}
-	
+
 		if (errors.size()==0){
 			/**base_url,method,headers.Accept*/
 			//Accept c'est une contrainte sur ce qu'on est disposés à recevoir dans la réponse
 			//si formats  c'est une spécification de ce qu'est ok de revoir le web service
 			//alors c'est contentType qui doit être généré en fonction de formats
-			builder.request(base_url,/*method?.toUpperCase()?:*/POST,ANY) {
+			println reqParams
+			println contentTypesNormalizer()
+			builder.request(base_url,POST,contentTypesNormalizer()) {
 				uri.path = path
-				//println request.URI
-				//println uri.toString()
+
 				uri.query = reqParams
-				
+				println uri
 				headers.'User-Agent' = 'Satanux/5.0'
-				
-				headers.'Content-Type'=JSON
+				println "YO"+uri
+				headers.Accept=contentTypesNormalizer()
+				println headers.Accept
+				//headers.'Content-Type'=JSON
 				//request.setContentType()
-				
-				println "serieux" + request.method
-				println request.method.class
-				println request.method=="POST"
 				if (request.method=="POST"){
-					println "oui, ici"
 					send JSON, ["clef":["subclef":'valeur']]
-					request.entity.getContent()
+					// bon dans le httpBuilder de groovy, le body est là : request.entity.getContent()
 				}else{
-				
+
 				}
-				//headers.'Accept'=formats
-				//TODO bon ici il te faut un test sur le contentType
-				response.success = { resp, reader ->
-					/*resp.properties.each(){k,v->
-						println k
-						println v
-					}*/
-					String statusCode=String?.valueOf(resp.statusLine.statusCode)
-					ret+=reader
-					ret+=statusCode
+				//headers.'Accept'=format
+		
+				request.properties.each{k,v->
+				println "$k : $v"
 				}
-				/*c'est pour si c'est du json
-				 response.success = { resp, json ->
-				 //  assert json.size() == 3
-				 println "Query response: "+json
-				 println resp.responseData
-				 //  json.responseData.results.each {
-				 //		println "  ${it.titleNoFormatting} : ${it.visibleUrl}"
-				 // }
-				 }*/
-				response.failure ={resp->
+				//bon en fait on dirait qu'il n'y a pas besoin de faire de
+				//la conditionnalité ici.
+				if (headers.Accept==JSON){
+					println "jevais dans le if"
+					response.success = { resp, json ->
+						//  assert json.size() == 3
 						String statusCode=String?.valueOf(resp.statusLine.statusCode)
-						ret+="request failure"+statusCode
+						ret+=json
+						ret+=statusCode
+						//  json.responseData.results.each {
+						//		println "  ${it.titleNoFormatting} : ${it.visibleUrl}"
+						// }
+					}
+				}else{
+				println "jevaisdansle else"
+					response.success = { resp, reader ->
+						
+						/*resp.properties.each(){k,v->
+						 println k
+						 println v
+						 }*/
+						String statusCode=String?.valueOf(resp.statusLine.statusCode)
+						ret+=reader
+						ret+=statusCode
+					}
+				}
+
+				response.failure ={resp->
+					String statusCode=String?.valueOf(resp.statusLine.statusCode)
+					ret+="request failure"+statusCode
 				}
 			}
 		}
 		if (!requiredParamsMissing.empty){
-			requiredParamsMissing.each{
-				 ret += "$it is missing for $name" 
-				 }
+			requiredParamsMissing.each{ ret += "$it is missing for $name"  }
 		}
-		println ret
+		//println ret
 		return ret
 	}
 }

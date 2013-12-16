@@ -1,50 +1,83 @@
 package feed
+import groovy.json.JsonSlurper
+import groovy.json.JsonBuilder
 
 class IAmAWebServiceController {
 	static allowedMethods = [vote:'POST']
-    def vote() {
-		//println "what"+request?.queryString
-		/*request.properties.each{propkey,propval->
-			println "reqpropkey"+propkey
-			//println "reqpropval"+propval
-		}*/
-		println "wwoooo"
-		//ça marche
-		println "????"+request.JSON
-		request.properties.each{k,v->
-			println "k"+ k
-			println "v"+ v
+
+
+	def ask(){
+		Map m = [:]
+		params.findAll(){k,v->!['action', 'controller'].contains(k)}.each{k,v->
+			m[k]=v
 		}
+		def queryOutputMapJson= m as grails.converters.JSON
+		queryOutputMapJson.toString()
+		return render(queryOutputMapJson)
+	}
+
+	def profile(){
+		Map m = [:]
+		params.findAll(){k,v->!['action', 'controller'].contains(k)}.each{k,v->
+			m[k]=v
+		}
+		def queryOutputMapJson= m as grails.converters.JSON
+		queryOutputMapJson.toString()
+		return render(queryOutputMapJson)
+	}
+
+	//def new(){
+	//	println "queryString"+request?.queryString
+	//	return render(params)
+	//}
+
+
+
+
+	def vote() {
+		def slurper = new JsonSlurper()
 		//println request.reader.getText()
-		println "woooo"
 		println "User agent: " + request.getHeader("User-Agent")
-		return render(params)
+		println "queryString"+request?.queryString
+		return render(request.JSON)
 	}
 	def login() {
-		println "what"+request?.queryString
-		println "User agent: " + request.getHeader("User-Agent")
-		return render(params)
+		Map m = [:]
+		params.findAll(){k,v->!['action', 'controller'].contains(k)}.each{k,v->
+			m[k]=v
+		}
+		def queryOutputMapJson= m as grails.converters.JSON
+		queryOutputMapJson.toString()
+		return render(queryOutputMapJson)
 	}
-	def ask(){
-		println "what"+request?.queryString
-		println "User agent: " + request.getHeader("User-Agent")
-		return render(params)
-	}
+
 	def comment() {
-		println "what"+request?.queryString
-		return render(params)
+		Map m = [:]
+		params.findAll(){k,v->!['action', 'controller'].contains(k)}.each{k,v->
+			m[k]=v
+		}
+		def queryOutputMapJson= m as grails.converters.JSON
+		queryOutputMapJson.toString()
+		return render(queryOutputMapJson)
 	}
 	def comments() {
-		println "what"+request?.queryString
-		return render(params)
+		Map m = [:]
+		params.findAll(){k,v->!['action','controller'].contains(k)}.each{k,v->
+			m[k]=v
+		}
+		def queryOutputMapJson= m as grails.converters.JSON
+		 queryOutputMapJson.toString()
+		return render(queryOutputMapJson)
 	}
-	def profile(){
-		println "queryString"+request?.queryString
-		return render(params)
-	}
+
 	def page(){
-		println "what"+request?.queryString
-		return render(params)
+	Map m = [:]
+		params.findAll(){k,v->!['action','controller'].contains(k)}.each{k,v->
+			m[k]=v
+		}
+		def queryOutputMapJson= m as grails.converters.JSON
+		 queryOutputMapJson.toString()
+		return render(queryOutputMapJson)
 	}
-	
+
 }

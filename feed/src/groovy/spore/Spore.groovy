@@ -38,7 +38,7 @@ class Spore {
 			//throw new SporeError()
 		}
 		/** Saturations of properties 
-		 *  with matching parsed JSON keys' values.
+		 *  with matching parsed JSON entries
 		 */
 		args?.each(){k,v->
 			if (this.properties.find({it.key==k && !['methods'].contains(k)})){
@@ -88,6 +88,7 @@ class Spore {
 			}
 		}
 	}
+	
 	/**@param parsedJson : the Json from which the Method should
 	 * be created.
 	 * @return either a Method either a String describing what prevented 
@@ -106,6 +107,7 @@ class Spore {
 			return checkResult
 		}
 	}
+	
 	/**Checks if the Json data from which the Method is to be created
 	 * is sufficient, i.e if it contains the mandatory fields.
 	 * @param parsedJson
