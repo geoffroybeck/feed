@@ -9,9 +9,11 @@ class FeedController {
 		def results=[:]
 		
 		Spore spore = feed.feed("/home/geoffroy/Documents/workspace/feed/web-app/json/test.json")
-		//Spore spore2 = feed.feed("/home/geoffroy/Documents/workspace/feed/web-app/json/badrequesterroronmethodbuildjson.json")
-		println "!"+spore.metaClass.methods*.name.sort().unique()
+		
+	//	println "!"+spore.metaClass.methods*.name.sort().unique()
+		
 		def i = 0
+		
 		spore?.methods?.each (){
 			def test = spore."$it"([test:i,q:"RIGHT"])
 			i++

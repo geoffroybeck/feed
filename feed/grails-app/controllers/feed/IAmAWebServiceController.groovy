@@ -39,6 +39,7 @@ class IAmAWebServiceController {
 		//println request.reader.getText()
 		println "User agent: " + request.getHeader("User-Agent")
 		println "queryString"+request?.queryString
+		println "JSON"+request?.JSON
 		return render(request.JSON)
 	}
 	def login() {

@@ -1,6 +1,5 @@
 package spore
 
-//@Grab(group='org.codehaus.groovy.modules.http-builder', module='http-builder', version='0.5.2' )
 import groovyx.net.http.HTTPBuilder
 import static groovyx.net.http.Method.GET
 import static groovyx.net.http.Method.POST
@@ -15,7 +14,7 @@ import static groovyx.net.http.ContentType.HTML
 import errors.MethodCallError
 
 class Method {
-	static contentTypes = ['JSON':JSON,'TEXT':TEXT,'XML':XML,"HTML":HTML,"URLENC":URLENC,"BINARY":BINARY,"JSON":JSON]
+	static contentTypes = ['JSON':JSON,'TEXT':TEXT,'XML':XML,"HTML":HTML,"URLENC":URLENC,"BINARY":BINARY]
 
 	HTTPBuilder builder = new HTTPBuilder();
 
@@ -67,9 +66,20 @@ class Method {
 	def request={reqParams->
 
 		def ret = ""
+		String dynamicPathComponent=""
+		String staticPathComponent=path
 		def requiredParamsMissing=[]
 		def whateverElseMissing=[]
 		def errors=[]
+		//bon ouais pour l'instant je vais partir de l'hypothèse qu'il y a UN placeholder
+		//mais en fait il y 'en autant qu'on veut
+		if (path.indexOf(':')!=-1){
+			dynamicPathComponent=path.substring(path.indexOf(':')+1,path.length())
+			staticPathComponent=path.replace(":"+dynamicPathComponent,"")
+		}
+		//pour que ça chémar ici les parenthèses sont obligatoires
+		String finalPath=staticPathComponent+(reqParams.find({k,v->k==dynamicPathComponent})?.value?:"")
+	
 		println "name : $name, required_params : ${required_params?:'none'}, effective params on call : ${reqParams?reqParams:''}"
 		required_params.each{
 			if (!reqParams.find({k,v->k==it})){
@@ -88,17 +98,11 @@ class Method {
 			//Accept c'est une contrainte sur ce qu'on est disposés à recevoir dans la réponse
 			//si formats  c'est une spécification de ce qu'est ok de revoir le web service
 			//alors c'est contentType qui doit être généré en fonction de formats
-			println reqParams
-			println contentTypesNormalizer()
 			builder.request(base_url,POST,contentTypesNormalizer()) {
-				uri.path = path
-
+				uri.path = finalPath
 				uri.query = reqParams
-				println uri
 				headers.'User-Agent' = 'Satanux/5.0'
-				println "YO"+uri
 				headers.Accept=contentTypesNormalizer()
-				println headers.Accept
 				//headers.'Content-Type'=JSON
 				//request.setContentType()
 				if (request.method=="POST"){
@@ -107,34 +111,20 @@ class Method {
 				}else{
 
 				}
-				//headers.'Accept'=format
-		
-				request.properties.each{k,v->
-				println "$k : $v"
-				}
 				//bon en fait on dirait qu'il n'y a pas besoin de faire de
 				//la conditionnalité ici.
 				if (headers.Accept==JSON){
-					println "jevais dans le if"
 					response.success = { resp, json ->
-						//  assert json.size() == 3
 						String statusCode=String?.valueOf(resp.statusLine.statusCode)
 						ret+=json
+						ret+=" : "
 						ret+=statusCode
-						//  json.responseData.results.each {
-						//		println "  ${it.titleNoFormatting} : ${it.visibleUrl}"
-						// }
 					}
 				}else{
-				println "jevaisdansle else"
 					response.success = { resp, reader ->
-						
-						/*resp.properties.each(){k,v->
-						 println k
-						 println v
-						 }*/
 						String statusCode=String?.valueOf(resp.statusLine.statusCode)
 						ret+=reader
+						ret+=" : "
 						ret+=statusCode
 					}
 				}
@@ -148,7 +138,6 @@ class Method {
 		if (!requiredParamsMissing.empty){
 			requiredParamsMissing.each{ ret += "$it is missing for $name"  }
 		}
-		//println ret
 		return ret
 	}
 }
