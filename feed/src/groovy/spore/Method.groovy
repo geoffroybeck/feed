@@ -12,7 +12,6 @@ import static groovyx.net.http.ContentType.BINARY
 import static groovyx.net.http.ContentType.URLENC
 import static groovyx.net.http.ContentType.HTML
 import errors.MethodCallError
-import java.net.*;
 
 class Method {
 	static contentTypes = ['JSON':JSON,'TEXT':TEXT,'XML':XML,"HTML":HTML,"URLENC":URLENC,"BINARY":BINARY]
@@ -53,6 +52,7 @@ class Method {
 				this."$k"=v
 			}
 		}
+	//	println baseEnviron()
 	}
 	def contentTypesNormalizer(){
 		String normalized
@@ -61,12 +61,11 @@ class Method {
 	}
 
 	def baseEnviron(){
-
 		return [
 
 			'REQUEST_METHOD': method,
-			'SERVER_NAME': urlParse().hostname,
-			'SERVER_PORT': urlParse().serverport,
+			'SERVER_NAME': urlParse().hostName,
+			'SERVER_PORT': urlParse().serverPort,
 			'SCRIPT_NAME': '/'+path.split ('/')[0],
 			'PATH_INFO': urlParse().query,
 			'QUERY_STRING': "",
@@ -89,14 +88,22 @@ class Method {
 	 * and it's value is a closure.
 	 */
 	def request={reqParams->
-		Map baseEnvirons = baseEnviron()
+		reqParams.each{
+			println "wow"+it.class
+		}
+		//bon donc voilà de prime abaord l'executeur de requête
+		//dans ce qu'il prend il faudra au moins
+		
+		Map environ = baseEnviron()
+		environ['spore.payload']=["yaquoiladedans":["duJSONMEC":["dqsqsd":1,2:3]]]
+		environ['spore.params']=reqParams
+		
 		Map queryString = reqParams
 		def ret = ""
 		String dynamicPathComponent=""
 		String staticPathComponent=path
-		def requiredParamsMissing=[]
-		def whateverElseMissing=[]
-		def errors=[]//parsed_base_url.hostname
+		def (requiredParamsMissing,whateverElseMissing,errors)=[[],[],[]]
+
 		//right now search and replace one placeholder
 		if (path.indexOf(':')!=-1){
 			dynamicPathComponent=path.substring(path.indexOf(':')+1,path.length())
@@ -132,25 +139,20 @@ class Method {
 		if (errors.size()==0){
 
 			/**base_url,method,headers.Accept*/
-			//Accept c'est une contrainte sur ce qu'on est disposés à recevoir dans la réponse
-			//si formats  c'est une spécification de ce qu'est ok de revoir le web service
-			//alors c'est contentType qui doit être généré en fonction de formats
 			builder.request(base_url,POST,contentTypesNormalizer()) {
-				//bon là ça va
 				uri.path = finalPath
 				uri.query = queryString
 				headers.'User-Agent' = 'Satanux/5.0'
 				headers.Accept=contentTypesNormalizer()
 				//headers.'Content-Type'=JSON
 				//request.setContentType()
-				if (request.method=="POST"){
-					send JSON, ["clef":["subclef":'valeur']]
+				if (["POST","PUT"].contains(request.method)){
+					send contentTypesNormalizer(), ["clef":["subclef":'valeur']]
 					// bon dans le httpBuilder de groovy, le body est là : request.entity.getContent()
 				}else{
 
 				}
-				//bon en fait on dirait qu'il n'y a pas besoin de faire de
-				//la conditionnalité ici.
+			//conditionnalité or not?
 				if (headers.Accept==JSON){
 					response.success = { resp, json ->
 						String statusCode=String?.valueOf(resp.statusLine.statusCode)
@@ -180,11 +182,9 @@ class Method {
 	Map urlParse(){
 		URL aURL = new URL(base_url)
 		URI aURI = new URI(base_url)
-		//println("protocol = " + aURL.getProtocol());
-		//println("authority = " + aURL.getAuthority());
 		return [
-			"hostname":aURL.getHost(),
-			"serverPort":aURL.getPort(),
+			"hostName":aURL.getHost(),
+			"serverPort":aURI.getPort(),
 			"path":aURL.getPath(),
 			"query" :aURL.getQuery(),
 			"userInfo":aURL.getUserInfo(),

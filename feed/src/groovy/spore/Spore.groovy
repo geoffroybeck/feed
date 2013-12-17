@@ -63,6 +63,7 @@ class Spore {
 					base_url:![null, ""].contains(v['base_url'])?v['base_url']:base_url,
 					//Found in the Json [k]
 					path:v['path'],
+					method:v['method'],
 					required_params:v['required_params'],
 					optional_params:v['optional_params'],
 					expected_status:v['expected_status'],
