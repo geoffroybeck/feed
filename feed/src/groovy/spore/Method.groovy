@@ -59,14 +59,16 @@ class Method {
 		def format=formats?:global_formats
 		normalized=contentTypes[format.class==java.lang.String?format.toUpperCase():format[0].toUpperCase()]
 	}
-	
+
 	def baseEnviron(){
+
 		return [
+
 			'REQUEST_METHOD': method,
 			'SERVER_NAME': urlParse().hostname,
 			'SERVER_PORT': urlParse().serverport,
-			//'SCRIPT_NAME': script_name(parsed_base_url.path),
-			//'PATH_INFO': path_info,
+			'SCRIPT_NAME': '/'+path.split ('/')[0],
+			'PATH_INFO': urlParse().query,
 			'QUERY_STRING': "",
 			'HTTP_USER_AGENT': 'whatever',
 			'spore.expected_status': expected_status,
@@ -75,43 +77,46 @@ class Method {
 			'spore.payload': '',
 			'spore.errors': '',
 			'spore.format': formats,
-			'spore.userinfo': userinfo(parsed_base_url),
-			'wsgi.url_scheme': parsed_base_url.scheme,
-			]
+			'spore.userinfo': urlParse().userInfo,
+			'wsgi.url_scheme': urlParse().scheme
+
+		]
 	}
+
 	/**Right now, it's not quite apparent,
 	 * but this spot is the most important part
 	 * of the workflow. It's a property of the class
 	 * and it's value is a closure.
 	 */
 	def request={reqParams->
-		urlParse()
-		Map queryString=reqParams
+		Map baseEnvirons = baseEnviron()
+		Map queryString = reqParams
 		def ret = ""
 		String dynamicPathComponent=""
 		String staticPathComponent=path
 		def requiredParamsMissing=[]
 		def whateverElseMissing=[]
 		def errors=[]//parsed_base_url.hostname
-
 		//right now search and replace one placeholder
 		if (path.indexOf(':')!=-1){
 			dynamicPathComponent=path.substring(path.indexOf(':')+1,path.length())
 			staticPathComponent=path.replace(":"+dynamicPathComponent,"")
 
 		}
+
 		//round brackets mandatory here
 		String finalPath=path
 		def entry= reqParams.find({k,v->k==dynamicPathComponent})
-		println "ENTRY"+entry
+
 		if (entry!=null){
+
 			finalPath=staticPathComponent+entry.value
 			queryString.remove(entry.key)
-			
+
 		}
+
 		//String finalPath=staticPathComponent+(reqParams.find({k,v->k==dynamicPathComponent})?.value?:"")
 		//reqParams.find({k,v->k==dynamicPathComponent})?reqParams=reqParams.remove(dynamicPathComponent):""
-		println "name : $name, required_params : ${required_params?:'none'}, effective params on call : ${reqParams?reqParams:''}"
 		required_params.each{
 			if (!reqParams.find({k,v->k==it})){
 				requiredParamsMissing+=it
@@ -125,10 +130,8 @@ class Method {
 		}
 
 		if (errors.size()==0){
-			println "????"+queryString
-			println "????"+path
+
 			/**base_url,method,headers.Accept*/
-			println base_url
 			//Accept c'est une contrainte sur ce qu'on est disposés à recevoir dans la réponse
 			//si formats  c'est une spécification de ce qu'est ok de revoir le web service
 			//alors c'est contentType qui doit être généré en fonction de formats
@@ -165,7 +168,7 @@ class Method {
 				}
 				response.failure ={resp->
 					String statusCode=String?.valueOf(resp.statusLine.statusCode)
-					ret+="request failure"+statusCode
+					ret+="request failure"+" : "+statusCode
 				}
 			}
 		}
@@ -175,19 +178,17 @@ class Method {
 		return ret
 	}
 	Map urlParse(){
-		URL aURL = new URL(base_url);
-	//println("protocol = " + aURL.getProtocol());
-	//println("authority = " + aURL.getAuthority());
-	println("host = " + aURL.getHost());
-	println("port = " + aURL.getPort());
-	println("path = " + aURL.getPath());
-	println("query = " + aURL.getQuery());
-	println("filename = " + aURL.getFile());
-	println("ref = " + aURL.getRef());
+		URL aURL = new URL(base_url)
+		URI aURI = new URI(base_url)
+		//println("protocol = " + aURL.getProtocol());
+		//println("authority = " + aURL.getAuthority());
 		return [
 			"hostname":aURL.getHost(),
 			"serverPort":aURL.getPort(),
-			"aeaze":"zeaaze"
-			]
+			"path":aURL.getPath(),
+			"query" :aURL.getQuery(),
+			"userInfo":aURL.getUserInfo(),
+			"scheme":aURI.getScheme()
+		]
 	}
 }
