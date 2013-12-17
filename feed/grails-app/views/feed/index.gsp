@@ -13,7 +13,12 @@
 	  		<div style="font-weight:bold;font-size:18px;">
 	  		${result.key}
 	  		</div> 
-	  		${(result.value.size()>100?result.value[0..99]:result.value)}
+	  		${(result.value.ret.size()>100?result.value.ret[0..99]:result.value.ret)}<br>
+	  		<ul>
+	  		<g:each in="${result.value.environ }" var ="enventry">
+	  		<li>${enventry }</li>
+	  		</g:each>
+	  		</ul>
 	  	</li>
   	</g:each>
   	</ul>

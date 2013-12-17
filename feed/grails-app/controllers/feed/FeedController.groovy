@@ -15,14 +15,14 @@ class FeedController {
 		def i = 0
 		
 		spore?.methods?.each (){
-			def test = spore."$it"([test:i,q:"RIGHT"])
+			def test = spore."$it"([test:i,q:"RIGHT",payload:["clef $i":["subclef":'valeur']]])
 			i++
 			results+=["$it":test]
 		}
 		
 		def test1 = spore.comments_for_post([test:"test",q:"WRONG",id:"unid"])
 		results += ["comments_for_post":test1]
-		def test99 = spore.vote([test:"test",q:"WRONG",id:"unid"])
+		def test99 = spore.vote([test:"test",q:"WRONG",id:"unid",payload:["clef":["subclef":'valeur']]])
 		results += ["comments_for_post":test1]
 		results +=["vote":test99]
 		/*
@@ -35,6 +35,7 @@ class FeedController {
 		def test2 = spore.auth_token([authorizationToken:"0uIuio5oka6jejhh",q:"WRONG"])
 		results+=["auth_token":test2]
 		//Spore spore3 = feed.feed("/home/geoffroy/workspace/feed/web-app/json/test.json","base_url_de_test")
+		println results
 		return [results: results]
 		}
 }
