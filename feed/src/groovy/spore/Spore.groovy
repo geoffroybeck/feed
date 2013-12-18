@@ -32,7 +32,7 @@ class Spore {
 			}
 		}.keySet()
 		mandatoryFields.each(){
-			if (!args."$it") specErrors[it]="quoi?"
+			if (!args."$it") specErrors[it]="missing required field"
 		}
 		if (specErrors.size>0){
 			//throw new SporeError()
@@ -127,6 +127,7 @@ class Spore {
 			if (!requiredParams.disjoint(optionalParams)){
 				methodBuildError["params"]="params cannot be optional and mandatory at the same time"
 		}
+			
 		parsedJson.each{k,v->
 			if (mandatoryFields.contains(k) && (!v || v.empty || v=='' )){
 
@@ -134,6 +135,7 @@ class Spore {
 
 			}
 		}
+		
 		if (!parsedJson['base_url'] && !parsedJson['api_base_url'] && !base_url){
 
 			methodBuildError['base_url']="Either a base_url or an api_base_url should be specified"
@@ -151,11 +153,11 @@ class Spore {
 
 	}
 	
-	def enable(){
+	def enable(middleware,args){
 
 	}
 	
-	def enableIf(Closure clos,predicate,middleware){
+	def enableIf(middleware,args,Closure clos){
 
 	}
 }

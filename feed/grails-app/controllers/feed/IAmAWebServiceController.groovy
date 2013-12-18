@@ -37,9 +37,9 @@ class IAmAWebServiceController {
 	def vote() {
 		def slurper = new JsonSlurper()
 		//println request.reader.getText()
-		println "User agent: " + request.getHeader("User-Agent")
-		println "queryString"+request?.queryString
-		println "JSON"+request?.JSON
+		//println "User agent: " + request.getHeader("User-Agent")
+		//println "queryString"+request?.queryString
+		//println "JSON"+request?.JSON
 		return render(request.JSON)
 	}
 	def login() {

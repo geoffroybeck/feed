@@ -11,13 +11,13 @@
   	<g:each in = "${results}" var = "result" >
 	  	<li>
 	  		<div style="font-weight:bold;font-size:18px;">
-	  		${result.key}
+	  			${result.key}
 	  		</div> 
-	  		${(result.value.ret.size()>100?result.value.ret[0..99]:result.value.ret)}<br>
+	  			${(result.value.ret.size()>100?result.value.ret[0..99]:result.value.ret)}<br>
 	  		<ul>
-	  		<g:each in="${result.value.environ }" var ="enventry">
-	  		<li>${enventry }</li>
-	  		</g:each>
+		  		<g:each in="${result.value.environ }" var ="enventry">
+		  			<li>${enventry.key } : ${enventry.value }</li>
+		  		</g:each>
 	  		</ul>
 	  	</li>
   	</g:each>

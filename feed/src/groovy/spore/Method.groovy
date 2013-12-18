@@ -63,55 +63,54 @@ class Method {
 
 	def baseEnviron(){
 		 def normalizedPath=path.split ('/').collect{it.trim()}-null-""
+		def formatedPathRemainder=path.replace('/'+(normalizedPath[0]),'')
 		return [
 
 			'REQUEST_METHOD': method,
 			'SERVER_NAME': urlParse().hostName,
 			'SERVER_PORT': urlParse().serverPort,
 			'SCRIPT_NAME': normalizedPath.size()>0?('/'+(normalizedPath[0])):"",
-			'PATH_INFO': urlParse().query,
+			'PATH_INFO': formatedPathRemainder,
 			'QUERY_STRING': "",
 			'HTTP_USER_AGENT': 'whatever',
-			'spore.expected_status': expected_status,
+			'spore.expected_status': expected_status?:"",
 			'spore.authentication': authentication,
 			'spore.params': '',
 			'spore.payload': '',
 			'spore.errors': '',
-			'spore.format': formats,
+			'spore.format': contentTypesNormalizer(),
 			'spore.userinfo': urlParse().userInfo,
 			'wsgi.url_scheme': urlParse().scheme
 
 		]
 	}
-
-	/**Right now, it's not quite apparent,
-	 * but this spot is the most important part
-	 * of the workflow. It's a property of the class
-	 * and it's value is a closure.
+	def getCurrentMiddlewares(){
+		middlewares
+	}
+	/**Builds the actual request from parameters
+	 * and environ
 	 */
 	def request={reqParams->
-		def lost=  path.split ('/').collect{it.trim()}-null-""
-		lost.each{
-			println lost.indexOf(it)
-		}
-		Map environ = baseEnviron()
 		
-
-		environ['spore.params']=buildParams(reqParams)
-		environ['spore.payload']=buildPayload(reqParams)
-		environ[]
-		Map queryString = reqParams
+		println "middlewares"+delegate.middlewares
+		Map environ = baseEnviron()
 		def ret = ""
 		String dynamicPathComponent=""
 		String staticPathComponent=path
 		def (requiredParamsMissing,whateverElseMissing,errors)=[[], [], []]
 
-		//right now search and replace one placeholder
+		environ['spore.params']=buildParams(reqParams)
+		environ['spore.payload']=buildPayload(reqParams)
+		//environ[]
+		Map queryString = reqParams
+		
+
+		//right now, search and replace one placeholder
 		if (path.indexOf(':')!=-1){
 			dynamicPathComponent=path.substring(path.indexOf(':')+1,path.length())
 			staticPathComponent=path.replace(":"+dynamicPathComponent,"")
 		}
-
+		
 		//round brackets mandatory here
 		String finalPath=path
 		def entry= reqParams.find({k,v->k==dynamicPathComponent})
@@ -153,7 +152,7 @@ class Method {
 				}else{
 
 				}
-				//conditionnalité or not?
+				//conditionnalité?
 				if (headers.Accept==JSON){
 					response.success = { resp, json ->
 						String statusCode=String?.valueOf(resp.statusLine.statusCode)
@@ -182,6 +181,9 @@ class Method {
 				   }
 		}
 		return [ret:ret,environ:environ]
+	}
+	def mergeEnvironsAndParams(e,p){
+		
 	}
 	Map urlParse(){
 		URL aURL = new URL(base_url)
