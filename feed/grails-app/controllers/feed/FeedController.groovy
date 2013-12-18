@@ -19,17 +19,26 @@ class FeedController {
 			i++
 			results+=["$it":test]
 		}
-		spore.middlewares="toto"
-		spore?.methods?.each (){
-			def test = spore."$it"([test:i,q:"WRONG",payload:["clef $i":["subclef":'valeur']]])
-			i++
-			results+=["$it":test]
-		}
+		spore.enable(spore.Middleware,["elephant":true,"adieu":3])
+		 spore.middlewares.each{k,v->
+			 if (k()){
+				 v.properties.each(){q,r->
+					 println q
+					 println r
+				 }
+			 }
+		 }
 		//def test1 = spore.comments_for_post([test:"test",q:"WRONG",id:"unid"])
 		//results += ["comments_for_post":test1]
 		//def test99 = spore.vote([test:"test",q:"WRONG",id:"unid",payload:["clef":["subclef":'valeur']]])
 		//results += ["comments_for_post":test1]
 		//results +=["vote":test99]
+		/*
+		 spore.metaClass.foo="foo"
+		 println "1"+spore.bark('bonjour')
+		 spore.metaClass.bark= fancyUntypedClosure
+		 println "2"+spore.bark('bonjour')
+		*/
 		
 		//def test2 = spore.auth_token([authorizationToken:"0uIuio5oka6jejhh",q:"WRONG"])
 		//results+=["auth_token":test2]

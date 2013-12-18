@@ -16,10 +16,13 @@ class Spore {
 	@Mandatory
 	List methods=[]// test purposes
 	def meta
-	def middlewares
+	def middlewares=[:]
 	def user_agent
 
-	/**Explicit constructor*/
+	/**Explicit constructor
+	 * When an explicit constructor is sqoecified the default initialization doesn't work
+	 * 
+	 * */
 	Spore(args){
 
 		def specErrors=[:]
@@ -154,10 +157,14 @@ class Spore {
 	}
 	
 	def enable(middleware,args){
-
+	enableIf(middleware,args,{true})
 	}
 	
 	def enableIf(middleware,args,Closure clos){
-
+		def instance = middleware.newInstance()
+		args.each(){k,v->
+		instance.metaClass."$k"=v
+		}
+		middlewares[clos]= instance
 	}
 }
