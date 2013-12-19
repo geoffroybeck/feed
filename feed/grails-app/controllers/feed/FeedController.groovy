@@ -15,11 +15,11 @@ class FeedController {
 		def i = 0
 		
 		spore?.methods?.each (){
-			def test = spore."$it"([test:i,q:"RIGHT",payload:["clef $i":["subclef":'valeur']]])
+			def test = spore."$it"([test:i,q:"RIGHT",username:"jean-marc",nextid:"6000",id:"123456",payload:["clef $i":["subclef":'valeur']]])
 			i++
 			results+=["$it":test]
 		}
-		spore.enable(spore.Middleware,["elephant":true,"adieu":3])
+		spore.enable(spore.Middleware,["elephant":true,"adieu":3,payload:["clef $i":["subclef":'valeur']]])
 		 spore.middlewares.each{k,v->
 			 if (k()){
 				 v.properties.each(){q,r->

@@ -12,6 +12,8 @@ import static groovyx.net.http.ContentType.BINARY
 import static groovyx.net.http.ContentType.URLENC
 import static groovyx.net.http.ContentType.HTML
 import errors.MethodCallError
+import java.util.regex.Matcher
+import java.util.regex.Pattern
 
 class Method {
 	static contentTypes = ['JSON':JSON,'TEXT':TEXT,'XML':XML,"HTML":HTML,"URLENC":URLENC,"BINARY":BINARY]
@@ -95,29 +97,18 @@ class Method {
 		println "middlewares"+delegate.middlewares
 		Map environ = baseEnviron()
 		def ret = ""
-		String dynamicPathComponent=""
-		String staticPathComponent=path
+		
 		def (requiredParamsMissing,whateverElseMissing,errors)=[[], [], []]
 
 		environ['spore.params']=buildParams(reqParams)
 		environ['spore.payload']=buildPayload(reqParams)
-		//environ[]
-		Map queryString = reqParams
+	
 		
 
-		//right now, search and replace one placeholder
-		if (path.indexOf(':')!=-1){
-			dynamicPathComponent=path.substring(path.indexOf(':')+1,path.length())
-			staticPathComponent=path.replace(":"+dynamicPathComponent,"")
-		}
+		def finalPath = placeHoldersReplacer(reqParams).finalPath
+		def queryString = placeHoldersReplacer(reqParams).queryString
 		
-		//round brackets mandatory here
-		String finalPath=path
-		def entry= reqParams.find({k,v->k==dynamicPathComponent})
-		if (entry!=null){
-			finalPath=staticPathComponent+entry.value
-			queryString.remove(entry.key)
-		}
+		
 
 		//String finalPath=staticPathComponent+(reqParams.find({k,v->k==dynamicPathComponent})?.value?:"")
 		//reqParams.find({k,v->k==dynamicPathComponent})?reqParams=reqParams.remove(dynamicPathComponent):""
@@ -135,6 +126,7 @@ class Method {
 
 		if (errors.size()==0){
 
+			
 			/**base_url,method,headers.Accept*/
 			builder.request(base_url,POST,contentTypesNormalizer()) {
 				//bon y'a moyen qu'ici les choses aient été faites en double
@@ -142,10 +134,6 @@ class Method {
 				uri.query = queryString
 				headers.'User-Agent' = 'Satanux/5.0'
 				headers.Accept=contentTypesNormalizer()
-				
-				//headers.'Content-Type'=JSON
-				//request.setContentType()
-				
 				if (["POST", "PUT"].contains(request.method)){
 					send contentTypesNormalizer(),environ['spore.payload'] 
 					// bon dans le httpBuilder de groovy, le body est là : request.entity.getContent()
@@ -184,6 +172,34 @@ class Method {
 	}
 	def mergeEnvironsAndParams(e,p){
 		
+	}
+	def placeHoldersReplacer(req){
+		Map queryString = req
+		String dynamicPathComponent=""
+		String staticPathComponent=path
+		String corrected=""
+		if (path.indexOf(':')!=-1){
+			def split = path.split ('/').collect{it.startsWith(":")?req.find({k,v->k==it-(":")})?.value:it}.join('/')
+			corrected = split
+			//dynamicPathComponent=path.substring(path.indexOf(':')+1,path.length())
+			//staticPathComponent=path.replace(":"+dynamicPathComponent,"")
+		}
+		String finalPath=path
+		def toBeRemovedFromFinalQueryString=path.split ('/').findAll{it.startsWith(":")}.collect{
+			it.replace(':','')
+		}
+		println toBeRemovedFromFinalQueryString
+		toBeRemovedFromFinalQueryString.each{
+			queryString.remove(it)
+		}
+		println queryString
+		//def entry= req.find({k,v->k==dynamicPathComponent})
+	//	if (entry!=null){
+	//		finalPath=staticPathComponent+entry.value
+	//		queryString.remove(entry.key)
+	//	}
+		
+		return [queryString:queryString,finalPath:finalPath]
 	}
 	Map urlParse(){
 		URL aURL = new URL(base_url)
