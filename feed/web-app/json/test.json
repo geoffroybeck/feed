@@ -46,7 +46,7 @@
       },
       "retrieve_page" : {
          "optional_params" : [
-            "nextid"
+            "nextid","content"
          ],
          "expected_status" : [
             "200"

@@ -15,7 +15,7 @@ class FeedController {
 		def i = 0
 		
 		spore?.methods?.each (){
-			def test = spore."$it"([test:i,q:"RIGHT",username:"jean-marc",nextid:"6000",id:"123456",payload:["clef $i":["subclef":'valeur']]])
+			def test = spore."$it"([content:"tres",test:i,q:"RIGHT",userid:"6666",username:"jean-marc",nextid:"6000",id:"123456",payload:["clef $i":["subclef":'valeur']]])
 			i++
 			results+=["$it":test]
 		}

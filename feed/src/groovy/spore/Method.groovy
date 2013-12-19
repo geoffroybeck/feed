@@ -56,7 +56,7 @@ class Method {
 		}
 		//	println baseEnviron()
 	}
-	
+
 	def contentTypesNormalizer(){
 		def normalized
 		def format=formats?:global_formats
@@ -64,7 +64,7 @@ class Method {
 	}
 
 	def baseEnviron(){
-		 def normalizedPath=path.split ('/').collect{it.trim()}-null-""
+		def normalizedPath=path.split ('/').collect{it.trim()}-null-""
 		def formatedPathRemainder=path.replace('/'+(normalizedPath[0]),'')
 		return [
 
@@ -93,25 +93,20 @@ class Method {
 	 * and environ
 	 */
 	def request={reqParams->
-		
+
 		println "middlewares"+delegate.middlewares
+		println "owner mec, owner"+owner
+		println "delegate mec"+delegate
 		Map environ = baseEnviron()
 		def ret = ""
-		
 		def (requiredParamsMissing,whateverElseMissing,errors)=[[], [], []]
-
-		environ['spore.params']=buildParams(reqParams)
-		environ['spore.payload']=buildPayload(reqParams)
-	
-		
-
 		def finalPath = placeHoldersReplacer(reqParams).finalPath
 		def queryString = placeHoldersReplacer(reqParams).queryString
-		
-		
+		environ['QUERY_STRING']=queryString
+		environ['spore.params']=buildParams(reqParams)
+		environ['spore.payload']=buildPayload(reqParams)
 
-		//String finalPath=staticPathComponent+(reqParams.find({k,v->k==dynamicPathComponent})?.value?:"")
-		//reqParams.find({k,v->k==dynamicPathComponent})?reqParams=reqParams.remove(dynamicPathComponent):""
+
 		required_params.each{
 			if (!reqParams.containsKey(it)){
 				requiredParamsMissing+=it
@@ -126,16 +121,14 @@ class Method {
 
 		if (errors.size()==0){
 
-			
 			/**base_url,method,headers.Accept*/
 			builder.request(base_url,POST,contentTypesNormalizer()) {
-				//bon y'a moyen qu'ici les choses aient été faites en double
 				uri.path = finalPath
 				uri.query = queryString
 				headers.'User-Agent' = 'Satanux/5.0'
 				headers.Accept=contentTypesNormalizer()
 				if (["POST", "PUT"].contains(request.method)){
-					send contentTypesNormalizer(),environ['spore.payload'] 
+					send contentTypesNormalizer(),environ['spore.payload']
 					// bon dans le httpBuilder de groovy, le body est là : request.entity.getContent()
 				}else{
 
@@ -164,42 +157,32 @@ class Method {
 		}
 		if (!requiredParamsMissing.empty){
 			requiredParamsMissing.each{
-				 ret += "$it is missing for $name"
-				 environ["spore.errors"]?environ["spore.errors"]+="$it is missing for $name":(environ["spore.errors"]="$it is missing for $name")
-				   }
+				ret += "$it is missing for $name"
+				environ["spore.errors"]?environ["spore.errors"]+="$it is missing for $name":(environ["spore.errors"]="$it is missing for $name")
+			}
 		}
 		return [ret:ret,environ:environ]
 	}
 	def mergeEnvironsAndParams(e,p){
-		
+
 	}
 	def placeHoldersReplacer(req){
 		Map queryString = req
-		String dynamicPathComponent=""
-		String staticPathComponent=path
 		String corrected=""
+		Map finalQuery=[:]
 		if (path.indexOf(':')!=-1){
 			def split = path.split ('/').collect{it.startsWith(":")?req.find({k,v->k==it-(":")})?.value:it}.join('/')
 			corrected = split
-			//dynamicPathComponent=path.substring(path.indexOf(':')+1,path.length())
-			//staticPathComponent=path.replace(":"+dynamicPathComponent,"")
 		}
-		String finalPath=path
-		def toBeRemovedFromFinalQueryString=path.split ('/').findAll{it.startsWith(":")}.collect{
+		def usedToBuildFinalPath=path.split ('/').findAll{it.startsWith(":")}.collect{
 			it.replace(':','')
 		}
-		println toBeRemovedFromFinalQueryString
-		toBeRemovedFromFinalQueryString.each{
-			queryString.remove(it)
+		queryString.each{k,v->
+			if (param(k) && ! usedToBuildFinalPath.contains(k)){
+				finalQuery[k]=v
+			}
 		}
-		println queryString
-		//def entry= req.find({k,v->k==dynamicPathComponent})
-	//	if (entry!=null){
-	//		finalPath=staticPathComponent+entry.value
-	//		queryString.remove(entry.key)
-	//	}
-		
-		return [queryString:queryString,finalPath:finalPath]
+		return [queryString:finalQuery,finalPath:corrected]
 	}
 	Map urlParse(){
 		URL aURL = new URL(base_url)
@@ -224,17 +207,20 @@ class Method {
 	}
 	/**
 	 * @param p : the request effective parameters
-	 * @return only parameters that will replace placeholders
+	 * @return only parameters that are listed under optional or required params
 	 */
 	def buildParams(p){
 		return p.findAll{k,v->param(k) }
 	}
-	/**For each effective request parameter, checks if it is to be used
-	 * to replace a placeholder.
+	/**For each effective request parameter, checks if it is registered under 
+	 * optional or required params
 	 */
 	boolean param(param){
 		List params=[]
-		[optional_params,required_params].each(){
+		[
+			optional_params,
+			required_params
+		].each(){
 			if (it!=null && !it.empty && it!=""){
 				params+=it
 			}

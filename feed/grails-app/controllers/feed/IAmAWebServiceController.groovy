@@ -5,7 +5,9 @@ import groovy.json.JsonBuilder
 class IAmAWebServiceController {
 	static allowedMethods = [vote:'POST']
 
-
+	 def by(){
+		 println "ouais"
+	 }
 	def ask(){
 		Map m = [:]
 		params.findAll(){k,v->!['action', 'controller'].contains(k)}.each{k,v->
@@ -26,11 +28,7 @@ class IAmAWebServiceController {
 		return render(queryOutputMapJson)
 	}
 
-	//def new(){
-	//	println "queryString"+request?.queryString
-	//	return render(params)
-	//}
-
+	
 
 
 
@@ -76,6 +74,7 @@ class IAmAWebServiceController {
 		params.findAll(){k,v->!['action','controller'].contains(k)}.each{k,v->
 			m[k]=v
 		}
+		println  "PARAMS"+params
 		def queryOutputMapJson= m as grails.converters.JSON
 		 queryOutputMapJson.toString()
 		return render(queryOutputMapJson)
