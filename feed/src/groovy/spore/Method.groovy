@@ -17,7 +17,7 @@ import java.util.regex.Pattern
 
 class Method {
 	static contentTypes = ['JSON':JSON,'TEXT':TEXT,'XML':XML,"HTML":HTML,"URLENC":URLENC,"BINARY":BINARY]
-
+	static methods = ["GET":GET,"POST":POST,"PUT":PUT]
 	HTTPBuilder builder = new HTTPBuilder();
 
 	@Mandatory
@@ -100,7 +100,11 @@ class Method {
 		Map environ = baseEnviron()
 		delegate.middlewares.each {x,y->
 			if (x(environ)){
-				//println "ouesch"+y
+				y.call(environ)
+			}
+			y.properties.each {k,v->
+				println "nom : "+k
+				println "valeur : "+v
 			}
 		}
 		def ret = ""
@@ -125,13 +129,13 @@ class Method {
 		}
 		if (errors.size()==0){
 			/**base_url,method,headers.Accept*/
-			builder.request(base_url,POST,contentTypesNormalizer()) {
+			builder.request(base_url,methods[method],contentTypesNormalizer()) {
 				uri.path = finalPath
 				uri.query = queryString
 				headers.'User-Agent' = 'Satanux/5.0'
 				headers.Accept=contentTypesNormalizer()
 				if (["POST", "PUT"].contains(request.method)){
-					
+					println uri
 					send contentTypesNormalizer(),environ['spore.payload']
 					// bon dans le httpBuilder de groovy, le body est là : request.entity.getContent()
 				}
@@ -166,9 +170,6 @@ class Method {
 		}
 		return [ret:ret,environ:environ]
 	}
-	def mergeEnvironsAndParams(e,p){
-
-	}
 	def placeHoldersReplacer(req){
 		Map queryString = req
 		String corrected=""
@@ -185,7 +186,7 @@ class Method {
 				finalQuery[k]=v
 			}
 		}
-		println corrected
+		println "CORRECTED"+(corrected!=""?corrected:path)
 		return [queryString:finalQuery,finalPath:corrected!=""?corrected:path]
 	}
 	def contentTypesNormalizer(){
@@ -205,6 +206,7 @@ class Method {
 			"scheme":aURI.getScheme()
 		]
 	}
+	
 	/**pop ["payload"]from parameters and add payload to environ
 	 * @param p : the request effective parameters
 	 * @return the payload
@@ -214,6 +216,7 @@ class Method {
 		p.remove("payload")
 		return entry
 	}
+	
 	/**
 	 * @param p : the request effective parameters
 	 * @return only parameters that are listed under optional or required params
@@ -222,6 +225,7 @@ class Method {
 		return p.findAll{k,v->
 			param(k) }
 	}
+	
 	/**For each effective request parameter, checks if it is registered under 
 	 * optional or required params
 	 */

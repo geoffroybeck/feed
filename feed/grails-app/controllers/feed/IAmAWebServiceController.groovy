@@ -5,13 +5,11 @@ import groovy.json.JsonBuilder
 class IAmAWebServiceController {
 	static allowedMethods = [vote:'POST']
 	def beforeInterceptor = [action: this.&auth, except: 'login']
-	
-	// defined with private scope, so it's not considered an action 
 	private auth() { 
-		println "AAVANT" + params.action
+		//println "BEFOREINTERCEPTOR : " + params.action
 		}
 	 def by(){
-		 println " I AM BEING CALLED"
+		// println " I AM BEING CALLED"+params.username
 		 Map m = [:]
 		 params.findAll(){k,v->!['action', 'controller'].contains(k)}.each{k,v->
 			 m[k]=v
@@ -29,7 +27,6 @@ class IAmAWebServiceController {
 		queryOutputMapJson.toString()
 		return render(queryOutputMapJson)
 	}
-
 	def profile(){
 		Map m = [:]
 		params.findAll(){k,v->!['action', 'controller'].contains(k)}.each{k,v->
@@ -39,11 +36,6 @@ class IAmAWebServiceController {
 		queryOutputMapJson.toString()
 		return render(queryOutputMapJson)
 	}
-
-	
-
-
-
 	def vote() {
 		def slurper = new JsonSlurper()
 		//println request.reader.getText()
@@ -80,7 +72,7 @@ class IAmAWebServiceController {
 		 queryOutputMapJson.toString()
 		return render(queryOutputMapJson)
 	}
-
+	 
 	def page(){
 	Map m = [:]
 		params.findAll(){k,v->!['action','controller'].contains(k)}.each{k,v->
