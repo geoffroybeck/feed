@@ -20,7 +20,7 @@ class Spore {
 	def user_agent
 
 	/**Explicit constructor
-	 * When an explicit constructor is sqoecified the default initialization doesn't work
+	 * When an explicit constructor is specified the default initialization doesn't work
 	 * 
 	 * */
 	Spore(args){
@@ -54,7 +54,7 @@ class Spore {
 		 * and its request property, which is a 
 		 * closure, is added to the Spore's methods
 		 * under the matching name, with a one parameter 
-		 * signature that is gonna need to be fulfilled with
+		 * signature that must be fulfilled with
 		 * a parameter Map.
 		 * */
 		args?."methods".each(){k,v->

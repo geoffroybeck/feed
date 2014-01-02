@@ -4,9 +4,21 @@ import groovy.json.JsonBuilder
 
 class IAmAWebServiceController {
 	static allowedMethods = [vote:'POST']
-
+	def beforeInterceptor = [action: this.&auth, except: 'login']
+	
+	// defined with private scope, so it's not considered an action 
+	private auth() { 
+		println "AAVANT" + params.action
+		}
 	 def by(){
-		 println "ouais"
+		 println " I AM BEING CALLED"
+		 Map m = [:]
+		 params.findAll(){k,v->!['action', 'controller'].contains(k)}.each{k,v->
+			 m[k]=v
+		 }
+		 def queryOutputMapJson= m as grails.converters.JSON
+		 queryOutputMapJson.toString()
+		 return render(queryOutputMapJson)
 	 }
 	def ask(){
 		Map m = [:]

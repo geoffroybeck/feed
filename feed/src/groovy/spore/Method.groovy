@@ -57,13 +57,10 @@ class Method {
 		//	println baseEnviron()
 	}
 
-	def contentTypesNormalizer(){
-		def normalized
-		def format=formats?:global_formats
-		normalized=contentTypes[format.class==java.lang.String?format.toUpperCase():format[0].toUpperCase()]
-	}
+
 
 	def baseEnviron(){
+
 		def normalizedPath=path.split ('/').collect{it.trim()}-null-""
 		def formatedPathRemainder=path.replace('/'+(normalizedPath[0]),'')
 		return [
@@ -86,18 +83,26 @@ class Method {
 
 		]
 	}
+
 	def getCurrentMiddlewares(){
 		middlewares
 	}
+
 	/**Builds the actual request from parameters
 	 * and environ
 	 */
 	def request={reqParams->
 
-		println "middlewares"+delegate.middlewares
-		println "owner mec, owner"+owner
-		println "delegate mec"+delegate
+		/*println "middlewares"+delegate.middlewares
+		println "owner"+owner
+		println "delegate"+delegate*/
+		
 		Map environ = baseEnviron()
+		delegate.middlewares.each {x,y->
+			if (x(environ)){
+				//println "ouesch"+y
+			}
+		}
 		def ret = ""
 		def (requiredParamsMissing,whateverElseMissing,errors)=[[], [], []]
 		def finalPath = placeHoldersReplacer(reqParams).finalPath
@@ -118,9 +123,7 @@ class Method {
 		].each() {
 			!it.empty?errors+=it:''
 		}
-
 		if (errors.size()==0){
-
 			/**base_url,method,headers.Accept*/
 			builder.request(base_url,POST,contentTypesNormalizer()) {
 				uri.path = finalPath
@@ -128,14 +131,13 @@ class Method {
 				headers.'User-Agent' = 'Satanux/5.0'
 				headers.Accept=contentTypesNormalizer()
 				if (["POST", "PUT"].contains(request.method)){
+					
 					send contentTypesNormalizer(),environ['spore.payload']
 					// bon dans le httpBuilder de groovy, le body est là : request.entity.getContent()
-				}else{
-
 				}
-				//conditionnalité?
 				if (headers.Accept==JSON){
 					response.success = { resp, json ->
+
 						String statusCode=String?.valueOf(resp.statusLine.statusCode)
 						ret+=json
 						ret+=" : "
@@ -143,6 +145,7 @@ class Method {
 					}
 				}else{
 					response.success = { resp, reader ->
+
 						String statusCode=String?.valueOf(resp.statusLine.statusCode)
 						ret+=reader
 						ret+=" : "
@@ -182,7 +185,13 @@ class Method {
 				finalQuery[k]=v
 			}
 		}
-		return [queryString:finalQuery,finalPath:corrected]
+		println corrected
+		return [queryString:finalQuery,finalPath:corrected!=""?corrected:path]
+	}
+	def contentTypesNormalizer(){
+		def normalized
+		def format=formats?:global_formats
+		normalized=contentTypes[format.class==java.lang.String?format.toUpperCase():format[0].toUpperCase()]
 	}
 	Map urlParse(){
 		URL aURL = new URL(base_url)
@@ -210,7 +219,8 @@ class Method {
 	 * @return only parameters that are listed under optional or required params
 	 */
 	def buildParams(p){
-		return p.findAll{k,v->param(k) }
+		return p.findAll{k,v->
+			param(k) }
 	}
 	/**For each effective request parameter, checks if it is registered under 
 	 * optional or required params
