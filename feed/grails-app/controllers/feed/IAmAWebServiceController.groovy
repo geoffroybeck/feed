@@ -6,10 +6,8 @@ class IAmAWebServiceController {
 	static allowedMethods = [vote:'POST']
 	def beforeInterceptor = [action: this.&auth, except: 'login']
 	private auth() { 
-		//println "BEFOREINTERCEPTOR : " + params.action
 		}
 	 def by(){
-		// println " I AM BEING CALLED"+params.username
 		 Map m = [:]
 		 params.findAll(){k,v->!['action', 'controller'].contains(k)}.each{k,v->
 			 m[k]=v
@@ -38,10 +36,6 @@ class IAmAWebServiceController {
 	}
 	def vote() {
 		def slurper = new JsonSlurper()
-		//println request.reader.getText()
-		//println "User agent: " + request.getHeader("User-Agent")
-		//println "queryString"+request?.queryString
-		//println "JSON"+request?.JSON
 		return render(request.JSON)
 	}
 	def login() {

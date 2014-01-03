@@ -14,13 +14,22 @@ class FeedController {
 
 		def i = 0
 
-	
+	Closure c =  {resp,json->
+					 	def ret=""
+						 println json
+						String statusCode=String?.valueOf(resp.statusLine.statusCode)
+						ret += json
+						ret+=" : "
+						ret+=statusCode
+						println "RET"+ret
+						return ret
+					}
 
-		spore.enable(spore.Middleware,["elephant":true,"adieu":3,payload:["clef $i":["subclef":'valeur']]])
-		spore.enable(spore.Middleware,["allAlongTheWatchTower":true,"thereMustBeSomeWayOutOfHere":0,payload:["clef $i":["subclef":'valeur']]])
+		spore.enable(spore.Middleware,["elephant":true,"adieu":3,"callback":c,payload:["clef $i":["subclef":'valeur']]])
+		/*spore.enable(spore.Middleware,["allAlongTheWatchTower":true,"callback":{args->println "WRONG : $args"},"thereMustBeSomeWayOutOfHere":0,payload:["clef $i":["subclef":'valeur']]])
 		spore.enableIf(spore.Middleware,["blabla":true,"blibli":3,payload:["bonjour":["aurevoir":'demain']]]){
 			spore.name!=null
-		}
+		}*/
 		
 		
 		spore.middlewares.each{k,v->

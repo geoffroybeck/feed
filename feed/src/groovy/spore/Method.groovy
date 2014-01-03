@@ -46,15 +46,13 @@ class Method {
 	Method(args){
 
 		args?.each(){k,v->
-			//def prop= this.properties.find({it.key==k})
 			if (this.properties.find({
 				it.key==k && ![
-					'nomdePorpPourLaquelleIlYaUnTraitementDifferent'
+					'differentBehavior'
 				].contains(k)})){
 				this."$k"=v
 			}
 		}
-		//	println baseEnviron()
 	}
 
 
@@ -93,18 +91,17 @@ class Method {
 	 */
 	def request={reqParams->
 
-		/*println "middlewares"+delegate.middlewares
-		println "owner"+owner
-		println "delegate"+delegate*/
-		
 		Map environ = baseEnviron()
-		delegate.middlewares.each {x,y->
+		Map middlewareModifiedEnviron=[:]
+		List storedCallbacks=[]
+		//println delegate.middlewares.iterator().reverse().collect()
+		delegate.middlewares.reverseEach{x,y->
+			def callback
 			if (x(environ)){
-				y.call(environ)
+				callback =	y.call(environ)
 			}
-			y.properties.each {k,v->
-				println "nom : "+k
-				println "valeur : "+v
+			if (callback!=null){
+				storedCallbacks+=callback
 			}
 		}
 		def ret = ""
@@ -115,7 +112,10 @@ class Method {
 		environ['spore.params']=buildParams(reqParams)
 		environ['spore.payload']=buildPayload(reqParams)
 
-
+		//ici ça doit être refait
+		// il y a une erreur de missingRequiredParams seulement si
+		//et le merge des spore.params du middleware && les spore.params
+		//du baseEnviron ne contient pas les requiredParams
 		required_params.each{
 			if (!reqParams.containsKey(it)){
 				requiredParamsMissing+=it
@@ -127,33 +127,34 @@ class Method {
 		].each() {
 			!it.empty?errors+=it:''
 		}
+
 		if (errors.size()==0){
+
+
+
 			/**base_url,method,headers.Accept*/
 			builder.request(base_url,methods[method],contentTypesNormalizer()) {
+
 				uri.path = finalPath
 				uri.query = queryString
 				headers.'User-Agent' = 'Satanux/5.0'
 				headers.Accept=contentTypesNormalizer()
+
 				if (["POST", "PUT"].contains(request.method)){
-					println uri
 					send contentTypesNormalizer(),environ['spore.payload']
 					// bon dans le httpBuilder de groovy, le body est là : request.entity.getContent()
 				}
 				if (headers.Accept==JSON){
-					response.success = { resp, json ->
-
-						String statusCode=String?.valueOf(resp.statusLine.statusCode)
-						ret+=json
-						ret+=" : "
-						ret+=statusCode
-					}
+					//bon ici c'est pas storedCallbacks[0]
+					//il faut déterminer disons, quel est le bon callback
+					//|| le construire
+					response.success ={resp,json->
+						 ret+=storedCallbacks[0](resp,json)
+						 }
+					
 				}else{
 					response.success = { resp, reader ->
-
-						String statusCode=String?.valueOf(resp.statusLine.statusCode)
-						ret+=reader
-						ret+=" : "
-						ret+=statusCode
+						ret+=storedCallbacks[0](resp,reader)
 					}
 				}
 				response.failure ={resp->
@@ -186,7 +187,6 @@ class Method {
 				finalQuery[k]=v
 			}
 		}
-		println "CORRECTED"+(corrected!=""?corrected:path)
 		return [queryString:finalQuery,finalPath:corrected!=""?corrected:path]
 	}
 	def contentTypesNormalizer(){
@@ -206,7 +206,7 @@ class Method {
 			"scheme":aURI.getScheme()
 		]
 	}
-	
+
 	/**pop ["payload"]from parameters and add payload to environ
 	 * @param p : the request effective parameters
 	 * @return the payload
@@ -216,16 +216,17 @@ class Method {
 		p.remove("payload")
 		return entry
 	}
-	
+
 	/**
 	 * @param p : the request effective parameters
 	 * @return only parameters that are listed under optional or required params
 	 */
 	def buildParams(p){
 		return p.findAll{k,v->
-			param(k) }
+			param(k)
+		}
 	}
-	
+
 	/**For each effective request parameter, checks if it is registered under 
 	 * optional or required params
 	 */

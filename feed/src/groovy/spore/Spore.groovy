@@ -149,11 +149,9 @@ class Spore {
 	}
 
 	def addDefault(param,value){
-		//defaults[params]
 	}
 	
 	def removeDefault(){
-
 	}
 	
 	def enable(middleware,args){
@@ -163,7 +161,14 @@ class Spore {
 	def enableIf(middleware,args,Closure clos){
 		def instance = middleware.newInstance()
 		args.each(){k,v->
+			if (k!="callback"){
 		instance.metaClass."$k"=v
+			}
+			else {
+				instance.metaClass."callback"={
+					return v
+				}
+			}
 		}
 		middlewares[clos]= instance
 	}
