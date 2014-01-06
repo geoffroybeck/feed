@@ -17,7 +17,7 @@ import java.util.regex.Pattern
 
 class Method {
 	static contentTypes = ['JSON':JSON,'TEXT':TEXT,'XML':XML,"HTML":HTML,"URLENC":URLENC,"BINARY":BINARY]
-	static methods = ["GET":GET,"POST":POST,"PUT":PUT]
+	static methods = ["GET":GET,"POST":POST,"PUT":PUT,"PATCH":"PATCH"]
 	HTTPBuilder builder = new HTTPBuilder();
 
 	@Mandatory
@@ -44,11 +44,11 @@ class Method {
 
 	//Explicit  constructor
 	Method(args){
-
 		args?.each(){k,v->
 			if (this.properties.find({
 				it.key==k && ![
-					'differentBehavior'
+					'differentBehavior',
+					'otherDifferentBehavior'
 				].contains(k)})){
 				this."$k"=v
 			}
@@ -82,40 +82,56 @@ class Method {
 		]
 	}
 
-	def getCurrentMiddlewares(){
-		middlewares
-	}
 
-	/**Builds the actual request from parameters
-	 * and environ
+
+	/**Builds the actual request from parameters,
+	 * environ, and enabled middlewares
 	 */
 	def request={reqParams->
 
 		Map environ = baseEnviron()
+		Map modifiedEnvirons = [:]
 		Map middlewareModifiedEnviron=[:]
 		List storedCallbacks=[]
-		//println delegate.middlewares.iterator().reverse().collect()
-		delegate.middlewares.reverseEach{x,y->
-			def callback
-			if (x(environ)){
-				callback =	y.call(environ)
-			}
-			if (callback!=null){
-				storedCallbacks+=callback
-			}
-		}
+		
+		
+		
 		def ret = ""
 		def (requiredParamsMissing,whateverElseMissing,errors)=[[], [], []]
 		def finalPath = placeHoldersReplacer(reqParams).finalPath
 		def queryString = placeHoldersReplacer(reqParams).queryString
+		
 		environ['QUERY_STRING']=queryString
 		environ['spore.params']=buildParams(reqParams)
 		environ['spore.payload']=buildPayload(reqParams)
 
-		//ici ça doit être refait
-		// il y a une erreur de missingRequiredParams seulement si
+		delegate.middlewares.find{condition,middleware->
+			
+			def callback
+			
+			if (condition(environ)){
+				
+				callback =	middleware.call(environ)
+			}
+			//bon  là c'est si tout est court-circuité
+			if (callback==true){
+				
+				return true
+				
+			}
+			//store to process after request
+			if (callback!=null){
+
+				storedCallbacks+=callback
+				
+			}
+			//pass control to next middleware
+			return false
+		}
+		
+		//il doit y avoir une erreur de missingRequiredParams seulement si
 		//et le merge des spore.params du middleware && les spore.params
-		//du baseEnviron ne contient pas les requiredParams
+		//du baseEnviron !contents(requiredParams)
 		required_params.each{
 			if (!reqParams.containsKey(it)){
 				requiredParamsMissing+=it
@@ -130,37 +146,33 @@ class Method {
 
 		if (errors.size()==0){
 
-
-
-			/**base_url,method,headers.Accept*/
 			builder.request(base_url,methods[method],contentTypesNormalizer()) {
-
 				uri.path = finalPath
 				uri.query = queryString
 				headers.'User-Agent' = 'Satanux/5.0'
 				headers.Accept=contentTypesNormalizer()
 
-				if (["POST", "PUT"].contains(request.method)){
+				if (["POST", "PUT", "PATCH"].contains(request.method)){
 					send contentTypesNormalizer(),environ['spore.payload']
-					// bon dans le httpBuilder de groovy, le body est là : request.entity.getContent()
 				}
-				if (headers.Accept==JSON){
-					//bon ici c'est pas storedCallbacks[0]
-					//il faut déterminer disons, quel est le bon callback
-					//|| le construire
-					response.success ={resp,json->
-						 ret+=storedCallbacks[0](resp,json)
-						 }
-					
-				}else{
-					response.success = { resp, reader ->
-						ret+=storedCallbacks[0](resp,reader)
-					}
+				
+				response.success =  {resp,json->
+					String statusCode=String?.valueOf(resp.statusLine.statusCode)
+					ret += json
+					ret+=" : "
+					ret+=statusCode
 				}
+				
 				response.failure ={resp->
 					String statusCode=String?.valueOf(resp.statusLine.statusCode)
 					ret+="request failure"+" : "+statusCode
 				}
+			}
+			
+			
+			def realRet
+			storedCallbacks.reverseEach{
+				realRet?realRet+=it():(realRet=it())
 			}
 		}
 		if (!requiredParamsMissing.empty){
@@ -169,8 +181,9 @@ class Method {
 				environ["spore.errors"]?environ["spore.errors"]+="$it is missing for $name":(environ["spore.errors"]="$it is missing for $name")
 			}
 		}
-		return [ret:ret,environ:environ]
+		return [ret:ret,environ:environ]//test purpose
 	}
+
 	def placeHoldersReplacer(req){
 		Map queryString = req
 		String corrected=""
@@ -189,11 +202,11 @@ class Method {
 		}
 		return [queryString:finalQuery,finalPath:corrected!=""?corrected:path]
 	}
-	def contentTypesNormalizer(){
-		def normalized
-		def format=formats?:global_formats
-		normalized=contentTypes[format.class==java.lang.String?format.toUpperCase():format[0].toUpperCase()]
+
+	def getCurrentMiddlewares(){
+		middlewares
 	}
+
 	Map urlParse(){
 		URL aURL = new URL(base_url)
 		URI aURI = new URI(base_url)
@@ -241,5 +254,10 @@ class Method {
 			}
 		}
 		param && param!="" && params.contains(param)
+	}
+	def contentTypesNormalizer(){
+		def normalized
+		def format=formats?:global_formats
+		normalized=contentTypes[format.class==java.lang.String?format.toUpperCase():format[0].toUpperCase()]
 	}
 }

@@ -7,7 +7,7 @@ class SporeFeeder {
 	
 	static slurper = new JsonSlurper()
 	
-	/**Depending whether the spore is being created from an url
+	/**Depending on whether the spore is being created from an url
 	 * or from a file feed calls feedFromJson or feedFromUrl to
 	 * slurp the Json into a Spore constructor
 	 */

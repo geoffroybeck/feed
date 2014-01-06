@@ -144,7 +144,6 @@ class Spore {
 			methodBuildError['base_url']="Either a base_url or an api_base_url should be specified"
 
 		}
-		
 		return methodBuildError?.size()==0?true:methodBuildError
 	}
 
@@ -161,14 +160,7 @@ class Spore {
 	def enableIf(middleware,args,Closure clos){
 		def instance = middleware.newInstance()
 		args.each(){k,v->
-			if (k!="callback"){
 		instance.metaClass."$k"=v
-			}
-			else {
-				instance.metaClass."callback"={
-					return v
-				}
-			}
 		}
 		middlewares[clos]= instance
 	}

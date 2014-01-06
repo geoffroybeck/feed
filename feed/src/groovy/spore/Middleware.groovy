@@ -8,12 +8,23 @@ class Middleware {
 		}
 	}
 	def call={params->
+		println this.properties.findAll{k,v->
+			println k
+			println v
+		}
+		
 		params.each {propName,propVal->
 			this.metaClass."$propName"=propVal
 		}
-		if (this?.metaClass.methods*.name.contains('callback')){
-			def closure= this?.callback()
+		//params['REQUEST_METHOD']="JAGUAR"
+		if (this?.metaClass.methods*.name.contains('processRequest')){
+			
+			return true
+		}else if (this?.metaClass.methods*.name.contains('processResponse')){
+			
+			def closure = this?.processResponse()
+			
 			return closure
-		}
+		}else return null
 	}
 }

@@ -9,29 +9,14 @@ class FeedController {
 		def results=[:]
 		
 		Spore spore = feed.feed("/home/geoffroy/Documents/workspace/feed/web-app/json/test.json")
-
-		//spore.metaClass.methods*.name.sort().unique()
-
 		def i = 0
-
-	Closure c =  {resp,json->
-					 	def ret=""
-						 println json
-						String statusCode=String?.valueOf(resp.statusLine.statusCode)
-						ret += json
-						ret+=" : "
-						ret+=statusCode
-						println "RET"+ret
-						return ret
-					}
-
-		spore.enable(spore.Middleware,["elephant":true,"adieu":3,"callback":c,payload:["clef $i":["subclef":'valeur']]])
-		/*spore.enable(spore.Middleware,["allAlongTheWatchTower":true,"callback":{args->println "WRONG : $args"},"thereMustBeSomeWayOutOfHere":0,payload:["clef $i":["subclef":'valeur']]])
+		spore.enable(spore.Middleware,["elephant":true,"adieu":3,payload:["blo":["blo":'blo']]])
+		/*
+		spore.enable(spore.Middleware,["allAlongTheWatchTower":true,"callback":{args->println "WRONG : $args"},"thereMustBeSomeWayOutOfHere":0,payload:["clef $i":["subclef":'valeur']]])
 		spore.enableIf(spore.Middleware,["blabla":true,"blibli":3,payload:["bonjour":["aurevoir":'demain']]]){
 			spore.name!=null
-		}*/
-		
-		
+		}
+		*/
 		spore.middlewares.each{k,v->
 
 			if (k()){
@@ -48,14 +33,12 @@ class FeedController {
 			results+=["$it":test]
 		}
 		def test1 = spore.comments_for_post([test:"test",q:"WRONG",id:"unid"])
-		//results += ["comments_for_post":test1]
+		results += ["comments_for_post":test1]
 		//def test99 = spore.vote([test:"test",q:"WRONG",id:"unid",payload:["clef":["subclef":'valeur']]])
 		//results += ["comments_for_post":test1]
 		//results +=["vote":test99]
 		//def test2 = spore.auth_token([authorizationToken:"0uIuio5oka6jejhh",q:"WRONG"])
 		//results+=["auth_token":test2]
-		//Spore spore3 = feed.feed("/home/geoffroy/workspace/feed/web-app/json/test.json","base_url_de_test")
-		//println results
 		return [results: results]
 	}
 }
