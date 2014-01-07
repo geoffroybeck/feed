@@ -14,6 +14,7 @@ import static groovyx.net.http.ContentType.HTML
 import errors.MethodCallError
 import java.util.regex.Matcher
 import java.util.regex.Pattern
+import request.Response
 
 class Method {
 	static contentTypes = ['JSON':JSON,'TEXT':TEXT,'XML':XML,"HTML":HTML,"URLENC":URLENC,"BINARY":BINARY]
@@ -46,10 +47,7 @@ class Method {
 	Method(args){
 		args?.each(){k,v->
 			if (this.properties.find({
-				it.key==k && ![
-					'differentBehavior',
-					'otherDifferentBehavior'
-				].contains(k)})){
+				it.key==k})){
 				this."$k"=v
 			}
 		}
@@ -92,19 +90,16 @@ class Method {
 		Map environ = baseEnviron()
 		Map modifiedEnvirons = [:]
 		Map middlewareModifiedEnviron=[:]
-		List storedCallbacks=[]
-		
-		
-		
 		def ret = ""
-		def (requiredParamsMissing,whateverElseMissing,errors)=[[], [], []]
+		def (requiredParamsMissing,whateverElseMissing,errors,storedCallbacks)=[[], [], [],[]]
 		def finalPath = placeHoldersReplacer(reqParams).finalPath
 		def queryString = placeHoldersReplacer(reqParams).queryString
 		
 		environ['QUERY_STRING']=queryString
 		environ['spore.params']=buildParams(reqParams)
 		environ['spore.payload']=buildPayload(reqParams)
-
+		int i=0
+		
 		delegate.middlewares.find{condition,middleware->
 			
 			def callback
@@ -113,22 +108,26 @@ class Method {
 				
 				callback =	middleware.call(environ)
 			}
-			//bon  là c'est si tout est court-circuité
-			if (callback==true){
+			
+			/**break loop*/
+			if (callback in Response){
 				
 				return true
 				
 			}
-			//store to process after request
+			/**store to process after request*/
 			if (callback!=null){
 
 				storedCallbacks+=callback
 				
 			}
-			//pass control to next middleware
+			i++
+			/**pass control to next middleware*/
 			return false
 		}
-		
+		println delegate.middlewares.size()
+		println i
+		println environ
 		//il doit y avoir une erreur de missingRequiredParams seulement si
 		//et le merge des spore.params du middleware && les spore.params
 		//du baseEnviron !contents(requiredParams)
@@ -172,6 +171,7 @@ class Method {
 			
 			def realRet
 			storedCallbacks.reverseEach{
+			
 				realRet?realRet+=it():(realRet=it())
 			}
 		}
@@ -189,8 +189,7 @@ class Method {
 		String corrected=""
 		Map finalQuery=[:]
 		if (path.indexOf(':')!=-1){
-			def split = path.split ('/').collect{it.startsWith(":")?req.find({k,v->k==it-(":")})?.value:it}.join('/')
-			corrected = split
+			corrected = path.split ('/').collect{it.startsWith(":")?req.find({k,v->k==it-(":")})?.value:it}.join('/')
 		}
 		def usedToBuildFinalPath=path.split ('/').findAll{it.startsWith(":")}.collect{
 			it.replace(':','')

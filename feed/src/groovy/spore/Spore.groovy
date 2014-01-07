@@ -128,7 +128,9 @@ class Spore {
 			Mandatory in it.declaredAnnotations*.annotationType()
 		}*.name
 			if (!requiredParams.disjoint(optionalParams)){
+				
 				methodBuildError["params"]="params cannot be optional and mandatory at the same time"
+				
 		}
 			
 		parsedJson.each{k,v->
@@ -158,10 +160,7 @@ class Spore {
 	}
 	
 	def enableIf(middleware,args,Closure clos){
-		def instance = middleware.newInstance()
-		args.each(){k,v->
-		instance.metaClass."$k"=v
-		}
+		def instance = middleware.newInstance(args)
 		middlewares[clos]= instance
 	}
 }

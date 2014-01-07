@@ -1,30 +1,30 @@
 package spore
 
 class Middleware {
-
-	def addHeaders(environ,headers){
-		headers.each(){header->
-			//environ['spore.headers'] = header
+	
+	//Explicit constructor
+	def Middleware(args){
+		args.each{k,v->
+			this.metaClass."$k"=v
 		}
 	}
 	def call={params->
-		println this.properties.findAll{k,v->
-			println k
-			println v
-		}
 		
 		params.each {propName,propVal->
-			this.metaClass."$propName"=propVal
+			
+			//this.metaClass."$propName"=propVal
+			
 		}
-		//params['REQUEST_METHOD']="JAGUAR"
+		//ici c'est encore faux mec
 		if (this?.metaClass.methods*.name.contains('processRequest')){
 			
-			return true
+			def ret =this?.processRequest(params)
+			return ret
 		}else if (this?.metaClass.methods*.name.contains('processResponse')){
 			
-			def closure = this?.processResponse()
+			 this?.processResponse(params)
 			
-			return closure
+	
 		}else return null
 	}
 }
