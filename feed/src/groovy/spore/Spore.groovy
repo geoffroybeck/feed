@@ -20,8 +20,8 @@ class Spore {
 	def user_agent
 
 	/**Explicit constructor
-	 * When an explicit constructor is specified the default initialization doesn't work
-	 * 
+	 * When an explicit constructor is specified,
+	 * the default initialization doesn't work
 	 * */
 	Spore(args){
 

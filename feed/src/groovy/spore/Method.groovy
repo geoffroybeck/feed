@@ -92,6 +92,7 @@ class Method {
 		Map middlewareModifiedEnviron=[:]
 		def ret = ""
 		def (requiredParamsMissing,whateverElseMissing,errors,storedCallbacks)=[[], [], [],[]]
+		
 		def finalPath = placeHoldersReplacer(reqParams).finalPath
 		def queryString = placeHoldersReplacer(reqParams).queryString
 		
@@ -99,7 +100,9 @@ class Method {
 		environ['spore.params']=buildParams(reqParams)
 		environ['spore.payload']=buildPayload(reqParams)
 		int i=0
-		
+		/*rather not idiomatic breakable loop
+		 * 
+		 * */
 		delegate.middlewares.find{condition,middleware->
 			
 			def callback
@@ -111,6 +114,7 @@ class Method {
 			
 			/**break loop*/
 			if (callback in Response){
+				//testpurposeici
 				
 				return true
 				
@@ -128,11 +132,8 @@ class Method {
 		println delegate.middlewares.size()
 		println i
 		println environ
-		//il doit y avoir une erreur de missingRequiredParams seulement si
-		//et le merge des spore.params du middleware && les spore.params
-		//du baseEnviron !contents(requiredParams)
 		required_params.each{
-			if (!reqParams.containsKey(it)){
+			if (!reqParams.containsKey(it) &&  ! environ['spore.params']){
 				requiredParamsMissing+=it
 			}
 		}
@@ -168,11 +169,14 @@ class Method {
 				}
 			}
 			
-			
+			//en fait ça c'est pas forcément là que ça se passe, ça serait 
+			//même sans doute mieux que ça se passe cash quand
+			//tu reçois la réponse.
 			def realRet
 			storedCallbacks.reverseEach{
 			
 				realRet?realRet+=it():(realRet=it())
+				
 			}
 		}
 		if (!requiredParamsMissing.empty){

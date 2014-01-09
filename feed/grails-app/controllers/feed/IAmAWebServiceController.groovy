@@ -6,6 +6,7 @@ class IAmAWebServiceController {
 	static allowedMethods = [vote:'POST']
 	def beforeInterceptor = [action: this.&auth, except: 'login']
 	private auth() { 
+		println "oui"
 		}
 	 def by(){
 		 Map m = [:]
@@ -58,6 +59,7 @@ class IAmAWebServiceController {
 		return render(queryOutputMapJson)
 	}
 	def comments() {
+		println "oh"
 		Map m = [:]
 		params.findAll(){k,v->!['action','controller'].contains(k)}.each{k,v->
 			m[k]=v
@@ -76,6 +78,11 @@ class IAmAWebServiceController {
 		def queryOutputMapJson= m as grails.converters.JSON
 		 queryOutputMapJson.toString()
 		return render(queryOutputMapJson)
+	}
+	def descriptionFile(){
+		def slurper = new JsonSlurper()
+		File file = new File("/home/geoffroy/Documents/workspace/feed/web-app/json/test.json")
+		return  render ( slurper.parse(new FileReader("/home/geoffroy/Documents/workspace/feed/web-app/json/test.json"))as grails.converters.JSON)
 	}
 
 }

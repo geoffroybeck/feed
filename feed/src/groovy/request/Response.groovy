@@ -1,7 +1,10 @@
 package request
 
 class Response {
-	Response (Closure clos){
-		this.metaClass['closure']=clos
+	
+	Response (args){
+		args.each(){k,v->
+			this.metaClass."$k"=v
+		}
 	}
 }

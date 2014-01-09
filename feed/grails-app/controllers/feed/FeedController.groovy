@@ -9,8 +9,9 @@ class FeedController {
 	
 	def index() {
 		def results=[:]
-
-		Spore spore = feed.feed("/home/geoffroy/Documents/workspace/feed/web-app/json/test.json")
+		//"/home/geoffroy/Documents/workspace/feed/web-app/json/test.json"
+		//Spore spore = feed.feed("/home/geoffroy/Documents/workspace/feed/web-app/json/test.json")
+		Spore spore = feed.feed("http://localhost:8080/feed/IAmAWebService/descriptionFile/test.json")
 		def i = 0
 		
 		spore.enable(
@@ -42,14 +43,16 @@ class FeedController {
 		spore.enable(
 			spore.Middleware,
 			[
-				"param1":true,
+				param1:true,
 				processRequest:{args->
-					 args['spore.headers'] = ["Authorization":64536546]
-					 Response r = new Response({
-						 "blabla"
-					 })
-					 return r
-					 },
+						 args['spore.headers'] = ["Authorization":64536546]
+						 Response r = new Response(
+							 ["ouais":{
+							 "status : 500"
+						 }]
+							 )
+						 return r
+						 },
 				param2:3,
 				payload:[
 					"blo":["blo":'blo']
@@ -77,6 +80,7 @@ class FeedController {
 		 spore.name!=null
 		 }
 		 */
+		
 		spore.middlewares.each{k,v->
 
 			if (k()){

@@ -2,6 +2,7 @@ package feed
 
 import groovy.json.JsonSlurper
 import spore.Spore
+import java.io.Reader
 
 class SporeFeeder {
 	
@@ -17,6 +18,7 @@ class SporeFeeder {
 		if (!api_description["base_url"]){
 			
 			api_description["base_url"]=base_url
+			
 		}
 		return new Spore(api_description)
 	}
@@ -24,6 +26,9 @@ class SporeFeeder {
 		 slurper.parse(new FileReader(specs))
 	}
 	private def feedFromUrl(specs){
-		 slurper.parse(specs)
+		URL url = new URL(specs)
+		InputStream urlStream = url.openStream();
+		BufferedReader reader = new BufferedReader(new InputStreamReader(urlStream));
+		slurper.parse(reader)
 	}
 }
