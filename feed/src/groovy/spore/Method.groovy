@@ -12,8 +12,12 @@ import static groovyx.net.http.ContentType.BINARY
 import static groovyx.net.http.ContentType.URLENC
 import static groovyx.net.http.ContentType.HTML
 import errors.MethodCallError
+
+import java.util.HashMap;
+import java.util.Map;
 import java.util.regex.Matcher
 import java.util.regex.Pattern
+
 import request.Response
 
 class Method {
@@ -103,16 +107,36 @@ class Method {
 		/*rather not idiomatic breakable loop
 		 * 
 		 * */
+		println delegate.middlewares
 		delegate.middlewares.find{condition,middleware->
-			
+			println i
 			def callback
 			
-			if (condition(environ)){
+			if (condition.class == java.lang.reflect.Method){
+				println "if"
+				Map m = [:]
+				 environ.each{key,value->
+					 m[key]=value
+				 }
+				 environ = m
+				def declaringClass = condition.getDeclaringClass()
+				Object obj = declaringClass.newInstance()
+				List l = []
+				println "bon mec"+condition.invoke(obj,2)
+				println "oué"
+				 if (condition.invoke(obj,2)){
+					 println "ici"
+					 callback =	middleware.call(environ)
+				 }
+			}
+			else if (condition(environ)){
 				
 				callback =	middleware.call(environ)
+				
 			}
 			
-			/**break loop*/
+			/**break loop
+			 */
 			if (callback in Response){
 				//testpurposeici
 				
