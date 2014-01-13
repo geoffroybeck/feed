@@ -2,8 +2,10 @@ package spore
 
 import groovyx.net.http.HTTPBuilder
 import static groovyx.net.http.Method.GET
+import static groovyx.net.http.Method.HEAD
 import static groovyx.net.http.Method.POST
 import static groovyx.net.http.Method.PUT
+import static groovyx.net.http.Method.DELETE
 import static groovyx.net.http.ContentType.JSON
 import static groovyx.net.http.ContentType.TEXT
 import static groovyx.net.http.ContentType.ANY
@@ -57,8 +59,6 @@ class Method {
 		}
 	}
 
-
-
 	def baseEnviron(){
 
 		def normalizedPath=path.split ('/').collect{it.trim()}-null-""
@@ -84,65 +84,80 @@ class Method {
 		]
 	}
 
-
-
-	/**Builds the actual request from parameters,
-	 * environ, and enabled middlewares
+	/**Builds the actual request from 
+	 * environ, parameters and enabled middlewares
+	 * in that order
 	 */
 	def request={reqParams->
-
+		
+		boolean noRequest=false
 		Map environ = baseEnviron()
 		Map modifiedEnvirons = [:]
 		Map middlewareModifiedEnviron=[:]
 		def ret = ""
 		def (requiredParamsMissing,whateverElseMissing,errors,storedCallbacks)=[[], [], [],[]]
 		
+		
+		int i=0
+		//ici il faut modifier les deux méthodes qui construisent
+		//la requête effective.
+		//les deux méthodes c'est placeHoldersreplacers
+		//et  buildPayload
 		def finalPath = placeHoldersReplacer(reqParams).finalPath
 		def queryString = placeHoldersReplacer(reqParams).queryString
 		
 		environ['QUERY_STRING']=queryString
 		environ['spore.params']=buildParams(reqParams)
 		environ['spore.payload']=buildPayload(reqParams)
-		int i=0
 		/*rather not idiomatic breakable loop
-		 * 
 		 * */
-		println delegate.middlewares
 		delegate.middlewares.find{condition,middleware->
-			println i
+			
 			def callback
 			
+			//If the condition was written in Java
+			//ouais alors ici on peut mettre un test en plus
+			//qui serait genre il faut que la declaringClass() soit
+			//au moins un truc qui hérite de Middleware MAIS
+			//est-ce bien nécessaire? en fait d'où que ça sorte
+			//je peux l'invoke
+			//à cause de la manière assez générique dont je fais le 
+			//getDeclaringClass.newInstance()
+			//ceci dit monsieur
+			//c'est vraiment ultra crade parce qu'instancier
+			//une classe dont tu ne sais pas ce que c'est
+			//bin si ça se trouve tu vas instancier 
+			//un main géant qui pète le skrull
+			//par ailleurs mec, tu déclenches 
+			//ce faisant tous les comportements
+			//onInit() de ta classe == pas cool
+			//du coup ce qu'il faudrait faire, c'est 
+			//bel et bien tester la declaringClass
+			
 			if (condition.class == java.lang.reflect.Method){
-				println "if"
-				Map m = [:]
-				 environ.each{key,value->
-					 m[key]=value
-				 }
-				 environ = m
+				 
 				def declaringClass = condition.getDeclaringClass()
 				Object obj = declaringClass.newInstance()
-				List l = []
-				println "bon mec"+condition.invoke(obj,2)
-				println "oué"
-				 if (condition.invoke(obj,2)){
-					 println "ici"
+				 if (condition.invoke(obj,environ)){
 					 callback =	middleware.call(environ)
 				 }
 			}
+			//else (i.e if it is a groovy.lang.Closure)
 			else if (condition(environ)){
 				
 				callback =	middleware.call(environ)
 				
 			}
 			
+			
 			/**break loop
 			 */
 			if (callback in Response){
-				//testpurposeici
-				
+				noRequest=true
 				return true
 				
 			}
+			
 			/**store to process after request*/
 			if (callback!=null){
 
@@ -152,10 +167,13 @@ class Method {
 			i++
 			/**pass control to next middleware*/
 			return false
-		}
-		println delegate.middlewares.size()
-		println i
-		println environ
+		} 
+		
+		
+		//From here environ is not modified anymore 
+		//that's where missing 
+		//or exceeding parameters
+		//errors can be raised.
 		required_params.each{
 			if (!reqParams.containsKey(it) &&  ! environ['spore.params']){
 				requiredParamsMissing+=it
@@ -167,8 +185,11 @@ class Method {
 		].each() {
 			!it.empty?errors+=it:''
 		}
-
-		if (errors.size()==0){
+        // effective processing of the request
+		//donc là tu dois ajouter une loop qui réécrit 
+		//le truc qui build la request
+		//et le truc qui build la réponse
+		if (errors.size()==0 && noRequest==false){
 
 			builder.request(base_url,methods[method],contentTypesNormalizer()) {
 				uri.path = finalPath
@@ -193,9 +214,7 @@ class Method {
 				}
 			}
 			
-			//en fait ça c'est pas forcément là que ça se passe, ça serait 
-			//même sans doute mieux que ça se passe cash quand
-			//tu reçois la réponse.
+		//ça mec tu dois le déplacer dans le bloc au dessus
 			def realRet
 			storedCallbacks.reverseEach{
 			
@@ -230,10 +249,6 @@ class Method {
 		return [queryString:finalQuery,finalPath:corrected!=""?corrected:path]
 	}
 
-	def getCurrentMiddlewares(){
-		middlewares
-	}
-
 	Map urlParse(){
 		URL aURL = new URL(base_url)
 		URI aURI = new URI(base_url)
@@ -257,7 +272,8 @@ class Method {
 		return entry
 	}
 
-	/**
+	/**Bon alors là mec t'as eu une interprétation charitable dans laquelle les exceeding paramaters 
+	 * ne déclenchent pas d'erreurs et sont juste éliminés
 	 * @param p : the request effective parameters
 	 * @return only parameters that are listed under optional or required params
 	 */
@@ -285,6 +301,11 @@ class Method {
 	def contentTypesNormalizer(){
 		def normalized
 		def format=formats?:global_formats
+		normalized=contentTypes[format.class==java.lang.String?format.toUpperCase():format[0].toUpperCase()]
+	}
+	def contentTypesNormalizer(args){
+		def normalized
+		def format=args['formats']?:formats?:global_formats
 		normalized=contentTypes[format.class==java.lang.String?format.toUpperCase():format[0].toUpperCase()]
 	}
 }

@@ -73,7 +73,11 @@ class FeedController {
 				payload:["blo":["blo":'blo']]
 			]
 		)
-		
+		println "OUAIS"
+		/*def methods = spore.metaClass.methods*.name.sort().unique()
+		println "mmmmmmmmmmmmmmmmmmmmm" +methods
+		def metaMethods = spore.metaClass.metaMethods*.name.sort().unique()
+		println "meta"+metaMethods*/
 		/*
 		 spore.enable(spore.Middleware,["allAlongTheWatchTower":true,"callback":{args->println "WRONG : $args"},"thereMustBeSomeWayOutOfHere":0,payload:["clef $i":["subclef":'valeur']]])
 		 spore.enableIf(spore.Middleware,["blabla":true,"blibli":3,payload:["bonjour":["aurevoir":'demain']]]){

@@ -1,5 +1,0 @@
-package spore
-
-class Javleware {
-
-}

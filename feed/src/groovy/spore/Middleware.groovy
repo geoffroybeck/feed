@@ -15,9 +15,6 @@ class Middleware {
 			//this.metaClass."$propName"=propVal
 			
 		}
-		//ici c'est encore faux mec
-		//bon alors t'es pas obligé de te fonder sur une convention de nommage
-		//
 		if (this?.metaClass.methods*.name.contains('processRequest')){
 			
 			def ret =this?.processRequest(params)

@@ -149,21 +149,37 @@ class Spore {
 		return methodBuildError?.size()==0?true:methodBuildError
 	}
 
-	def addDefault(param,value){
-	}
 	
-	def removeDefault(){
-	}
-	
+	/** the method used to 
+	 * enable a Middleware to modifiy
+	 * requests and responses
+	 * @param middleware
+	 * @param args
+	 * @return
+	 */
 	def enable(middleware,args){
 	enableIf(middleware,args,{true})
 	}
-	
+	/**
+	 * 
+	 * @param middleware
+	 * @param args 
+	 * @param clos the condition on which the Middleware should be enabled.
+	 * @return
+	 */
 	def enableIf(middleware,args,Closure clos){
 		def instance = middleware.newInstance(args)
 		middlewares[clos]= instance
 	}
-	//ouais bon
+	/**
+	 * 
+	 * @param middleware
+	 * @param args 
+	 * @param clos the condition on which the Middleware
+	 * should be enabled, derived from a client-consumer
+	 * side written java.lang.reflect.Method 
+	 * @return
+	 */
 	def enableIf(middleware,args,java.lang.reflect.Method clos){
 		
 		def instance = middleware.newInstance(args)
@@ -173,6 +189,11 @@ class Spore {
 	def enableIf(middleware,args){
 	//	def instance = middleware.newInstance(args)
 	//	middlewares[clos]= instance
+	}
+	def addDefault(param,value){
+	}
+	
+	def removeDefault(){
 	}
 	
 }
