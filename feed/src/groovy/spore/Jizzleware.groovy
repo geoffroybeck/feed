@@ -3,12 +3,17 @@ import java.lang.reflect.Method
 
 class Jizzleware extends Middleware{
 	
+	Jizzleware(){
+	}
 	public Jizzleware(Object arg0) {
 		super(arg0);
+		
 	}
-	
+	public Jizzleware(Map arg0) {
+		super(arg0);
+	}
 	public java.lang.reflect.Method conditionJizzer(){
-		def condition
+		def condition 
 		Method[] methods = this.getClass().getMethods();
 		methods.each{
 			if (it.getName()=="condition"){

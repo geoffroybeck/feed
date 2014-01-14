@@ -137,7 +137,13 @@ class Method {
 			if (condition.class == java.lang.reflect.Method){
 				 
 				def declaringClass = condition.getDeclaringClass()
-				Object obj = declaringClass.newInstance()
+				println condition
+				//mmmmmm c'est de plus en plus crade ce que tu fais mec
+				//alors bon c'est quand ça vient de java que ça devient comme ça
+				//mais c'est pas vraiment une excuse
+				
+				println condition.getDeclaringClass()
+				Object obj = declaringClass.newInstance([:])
 				 if (condition.invoke(obj,environ)){
 					 callback =	middleware.call(environ)
 				 }
