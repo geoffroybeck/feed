@@ -1,0 +1,89 @@
+{
+   "base_url" : "http://localhost:8080",
+   "version" : "0.02",
+   "methods" : {
+      "askhn_posts" : {
+         "optional_params" : [
+            "nextid"
+         ],
+         "expected_status" : [
+            "200"
+         ],
+         "path" : "/feed/IAmAWebService/ask/",
+         "method" : "GET"
+      },
+      "vote" : {
+         "path" : "/feed/IAmAWebService/vote",
+         "method" : "POST"
+      },
+      "auth_token" : {
+         "path" : "/feed/IAmAWebService/login",
+         "method" : "POST"
+      },
+      "new_posts" : {
+         "optional_params" : [
+            "nextid"
+         ],
+         "expected_status" : [
+            "200"
+         ],
+         "path" : "/feed/IAmAWebService/new/:nextid",
+         "method" : "GET"
+      },
+      "comment" : {
+         "path" : "/feed/IAmAWebService/comment",
+         "method" : "POST"
+      },
+      "user_profile" : {
+         "required_params" : [
+            "userid"
+         ],
+         "expected_status" : [
+            "200"
+         ],
+         "path" : "/feed/IAmAWebService/profile/:userid",
+         "method" : "GET"
+      },
+      "retrieve_page" : {
+         "optional_params" : [
+            "nextid","content"
+         ],
+         "expected_status" : [
+            "200"
+         ],
+         "path" : "/feed/IAmAWebService/page/:nextid",
+         "method" : "GET"
+      },
+      "posts_from_user" : {
+         "required_params" : [
+            "username"
+         ],
+         "optional_params" : [
+            "nextid"
+         ],
+         "expected_status" : [
+            "200"
+         ],
+         "path" : "/feed/IAmAWebService/by/:username/:nextid",
+         "method" : "GET"
+      },
+      "comments_for_post" : {
+         "required_params" : [
+            "id"
+         ],
+         "expected_status" : [
+            "200"
+         ],
+         "path" : "/feed/IAmAWebService/comments/:id",
+         "method" : "GET"
+      }
+   },
+   "formats" : [
+      "json"
+   ],
+  
+   "authority" : "GITHUB:franckcuny",
+   "meta" : {
+      "documentation" : "http://api.ihackernews.com/"
+   }
+}

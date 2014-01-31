@@ -4,6 +4,11 @@ import errors.MethodError
 import errors.SporeError
 
 class Spore {
+	static errorMessages=[
+		'name':'A name for this client is required',
+		'base_url':'A base URL to the REST Web Service is required',
+		'methods':'One method is required to create the client'
+	]
 
 	@Mandatory
 	def name
@@ -62,9 +67,9 @@ class Spore {
 				methods+=k
 				def m = createMethod([
 					name:k,
-					//Inherited from spore if not specified in the parsed Json
+					/**Inherited from spore if not specified in the parsed Json*/
 					base_url:![null, ""].contains(v['base_url'])?v['base_url']:base_url,
-					//Found in the Json [k]
+					/**Found in the Json [k]*/
 					path:v['path'],
 					method:v['method'],
 					required_params:v['required_params'],
@@ -76,7 +81,7 @@ class Spore {
 					formats:v['formats'],
 					documentation:v['documentation'],
 					defaults : v['defaults'],
-					//Inherited from Spore
+					/**Inherited from Spore*/
 					middlewares:middlewares,
 					global_authentication:authentication,
 					global_formats:formats
@@ -150,7 +155,7 @@ class Spore {
 	}
 
 	
-	/** the method used to 
+	/**The method used to 
 	 * enable a Middleware to modifiy
 	 * requests and responses
 	 * @param middleware
@@ -160,8 +165,9 @@ class Spore {
 	def enable(middleware,args){
 	enableIf(middleware,args,{true})
 	}
-	/**
-	 * 
+	/**The method used to 
+	 * enable CONDITIONNALY a Middleware to modifiy
+	 * requests and responses
 	 * @param middleware
 	 * @param args 
 	 * @param clos the condition on which the Middleware should be enabled.
@@ -171,9 +177,10 @@ class Spore {
 		def instance = middleware.newInstance(args)
 		middlewares[clos]= instance
 	}
-	/**
-	 * 
-	 * @param middleware
+	/**The method used to 
+	 * enable CONDITIONNALY a Middleware to modifiy
+	 * requests and responses
+	 * @param middleware the class of the Middleware to enable
 	 * @param args 
 	 * @param clos the condition on which the Middleware
 	 * should be enabled, derived from a client-consumer
@@ -185,7 +192,11 @@ class Spore {
 		def instance = middleware.newInstance(args)
 		middlewares[clos]= instance
 	}
-	
+	/**???
+	 * @param middleware
+	 * @param args
+	 * @return
+	 */
 	def enableIf(middleware,args){
 	//	def instance = middleware.newInstance(args)
 	//	middlewares[clos]= instance

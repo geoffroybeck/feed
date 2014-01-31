@@ -1,0 +1,31 @@
+{
+   "base_url" : "http://localhost:8080",
+   "version" : "0.02",
+   "methods" : {
+      "askhn_posts" : {
+      	"api_base_url":"",
+         "optional_params" : [
+            "nextid"
+         ],
+         "expected_status" : [
+            "200"
+         ],
+         "path" : "/IAmAWebService/ask/",
+         "method" : "GET"
+      },
+      "vote" : {
+      "api_base_url":"",
+         "path" : "/IAmAWebService/vote",
+         "method" : "POST"
+      }
+    
+   },
+   "formats" : [
+      "json"
+   ],
+   "name" : "ihackernews",
+   "authority" : "GITHUB:franckcuny",
+   "meta" : {
+      "documentation" : "http://api.ihackernews.com/"
+   }
+}

@@ -24,7 +24,10 @@ import request.Response
 
 class Method {
 	static contentTypes = ['JSON':JSON,'TEXT':TEXT,'XML':XML,"HTML":HTML,"URLENC":URLENC,"BINARY":BINARY]
+	//ça, ça peut pas vraiment marcher, il faut que tu choppes snapshot 0.7,
+	//dedans il y a PATCH
 	static methods = ["GET":GET,"POST":POST,"PUT":PUT,"PATCH":"PATCH"]
+	
 	HTTPBuilder builder = new HTTPBuilder();
 
 	@Mandatory
@@ -52,6 +55,7 @@ class Method {
 	//Explicit  constructor
 	Method(args){
 		args?.each(){k,v->
+			println "KKKKKK"+k
 			if (this.properties.find({
 				it.key==k})){
 				this."$k"=v
@@ -110,39 +114,20 @@ class Method {
 		environ['spore.params']=buildParams(reqParams)
 		environ['spore.payload']=buildPayload(reqParams)
 		/*rather not idiomatic breakable loop
+		 * that call middlewares. Breaks if a response
+		 * is found.
 		 * */
 		delegate.middlewares.find{condition,middleware->
 			
 			def callback
 			
 			//If the condition was written in Java
-			//ouais alors ici on peut mettre un test en plus
-			//qui serait genre il faut que la declaringClass() soit
-			//au moins un truc qui hérite de Middleware MAIS
-			//est-ce bien nécessaire? en fait d'où que ça sorte
-			//je peux l'invoke
-			//à cause de la manière assez générique dont je fais le 
-			//getDeclaringClass.newInstance()
-			//ceci dit monsieur
-			//c'est vraiment ultra crade parce qu'instancier
-			//une classe dont tu ne sais pas ce que c'est
-			//bin si ça se trouve tu vas instancier 
-			//un main géant qui pète le skrull
-			//par ailleurs mec, tu déclenches 
-			//ce faisant tous les comportements
-			//onInit() de ta classe == pas cool
-			//du coup ce qu'il faudrait faire, c'est 
-			//bel et bien tester la declaringClass
-			
 			if (condition.class == java.lang.reflect.Method){
-				 
 				def declaringClass = condition.getDeclaringClass()
-				println condition
-				//mmmmmm c'est de plus en plus crade ce que tu fais mec
-				//alors bon c'est quand ça vient de java que ça devient comme ça
-				//mais c'est pas vraiment une excuse
-				
-				println condition.getDeclaringClass()
+				//ici c'est pas super safe, ça part un peu de l'hypothèse 
+				//que la declaringClass prend pour constructeur ça [:]
+				//ceci dit il ne devrait pas y avoir de Middleware.condition 
+				//qui ne soient pas comme ça.
 				Object obj = declaringClass.newInstance([:])
 				 if (condition.invoke(obj,environ)){
 					 callback =	middleware.call(environ)
@@ -192,42 +177,15 @@ class Method {
 			!it.empty?errors+=it:''
 		}
         // effective processing of the request
-		//donc là tu dois ajouter une loop qui réécrit 
-		//le truc qui build la request
-		//et le truc qui build la réponse
-		if (errors.size()==0 && noRequest==false){
-
-			builder.request(base_url,methods[method],contentTypesNormalizer()) {
-				uri.path = finalPath
-				uri.query = queryString
-				headers.'User-Agent' = 'Satanux/5.0'
-				headers.Accept=contentTypesNormalizer()
-
-				if (["POST", "PUT", "PATCH"].contains(request.method)){
-					send contentTypesNormalizer(),environ['spore.payload']
-				}
-				
-				response.success =  {resp,json->
-					String statusCode=String?.valueOf(resp.statusLine.statusCode)
-					ret += json
-					ret+=" : "
-					ret+=statusCode
-				}
-				
-				response.failure ={resp->
-					String statusCode=String?.valueOf(resp.statusLine.statusCode)
-					ret+="request failure"+" : "+statusCode
-				}
-			}
-			
-		//ça mec tu dois le déplacer dans le bloc au dessus
-			def realRet
-			storedCallbacks.reverseEach{
-			
-				realRet?realRet+=it():(realRet=it())
-				
-			}
-		}
+		 if (errors.size()==0 && noRequest==false){
+                        //il faut voir pour remonter ça avec le reste
+                        //parce tout ce qu'il y a là doit pouvoir être réécrit
+                        environ['base_url']=base_url
+                        environ['method']=method
+                        environ['finalPath']=finalPath
+                        environ['queryString']=queryString
+                        ret = requestSend(environ)
+                }
 		if (!requiredParamsMissing.empty){
 			requiredParamsMissing.each{
 				ret += "$it is missing for $name"

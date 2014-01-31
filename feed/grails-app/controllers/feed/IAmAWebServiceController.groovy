@@ -6,7 +6,7 @@ class IAmAWebServiceController {
 	static allowedMethods = [vote:'POST']
 	def beforeInterceptor = [action: this.&auth, except: 'login']
 	private auth() { 
-		println "oui"
+		println params
 		}
 	 def by(){
 		 Map m = [:]
@@ -60,6 +60,15 @@ class IAmAWebServiceController {
 	}
 	def comments() {
 		println "oh"
+		request.properties.each{k,v->
+			println k
+			println v
+		}
+
+		request.headerNames.each{name->
+			println "$name : "+request.getHeader(name)
+			
+		}
 		Map m = [:]
 		params.findAll(){k,v->!['action','controller'].contains(k)}.each{k,v->
 			m[k]=v
